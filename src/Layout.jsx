@@ -4,16 +4,23 @@ import { createPageUrl } from './utils';
 import { Package, ShoppingCart, BarChart3, ClipboardList, Settings, CheckCircle, RefreshCw } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { Badge } from '@/components/ui/badge';
 
 export default function Layout({ children, currentPageName }) {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(null);
 
+  const { data: shoppingList = [] } = useQuery({
+    queryKey: ['shoppingList'],
+    queryFn: () => base44.entities.ShoppingList.list()
+  });
+
   const menuItems = [
     { name: 'Produkte', icon: Package, path: 'Produkte' },
     { name: 'Verkäufe', icon: ShoppingCart, path: 'Verkäufe' },
     { name: 'Analyse', icon: BarChart3, path: 'Analyse' },
-    { name: 'Merkzettel', icon: ClipboardList, path: 'Merkzettel' },
+    { name: 'Merkzettel', icon: ClipboardList, path: 'Merkzettel', badge: shoppingList.length },
     { name: 'Bearbeiten', icon: Settings, path: 'Bearbeiten' }
   ];
 
@@ -81,7 +88,7 @@ export default function Layout({ children, currentPageName }) {
                 <Link
                   key={item.path}
                   to={createPageUrl(item.path)}
-                  className={`flex items-center gap-2 px-4 py-3 border-b-2 whitespace-nowrap transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-3 border-b-2 whitespace-nowrap transition-colors relative ${
                     isActive
                       ? 'border-green-600 text-green-600 font-medium'
                       : 'border-transparent text-gray-600 hover:text-green-600 hover:border-green-300'
@@ -89,6 +96,11 @@ export default function Layout({ children, currentPageName }) {
                 >
                   <Icon className="w-4 h-4" />
                   <span className="text-sm">{item.name}</span>
+                  {item.badge > 0 && (
+                    <Badge className="ml-1 bg-orange-500 hover:bg-orange-600 text-white px-1.5 py-0 h-5 text-xs">
+                      {item.badge}
+                    </Badge>
+                  )}
                 </Link>
               );
             })}
@@ -98,6 +110,16 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {shoppingList.length > 0 && currentPageName !== 'Merkzettel' && (
+          <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 text-orange-800">
+              <ClipboardList className="w-5 h-5" />
+              <span className="font-medium">
+                {shoppingList.length} {shoppingList.length === 1 ? 'Produkt muss' : 'Produkte müssen'} nachbestellt werden
+              </span>
+            </div>
+          </div>
+        )}
         {children}
       </main>
     </div>

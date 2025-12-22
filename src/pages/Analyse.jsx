@@ -34,6 +34,12 @@ export default function Analyse() {
   const last7DaysRevenue = last7DaysSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
   const lastYearRevenue = lastYearSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
 
+  // Einnahmen (Profit)
+  const totalProfit = sales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
+  const todayProfit = todaySales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
+  const last7DaysProfit = last7DaysSales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
+  const lastYearProfit = lastYearSales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
+
   // Chart-Daten basierend auf Filter
   let chartData = [];
   let filteredSales = sales;
@@ -131,7 +137,7 @@ export default function Analyse() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -169,6 +175,24 @@ export default function Analyse() {
               </div>
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-amber-50 border-amber-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-amber-700">Einnahmen</p>
+                <p className="text-2xl font-bold text-amber-900">
+                  {timeFilter === 'today' ? todayProfit.toFixed(2) : 
+                   timeFilter === '7days' ? last7DaysProfit.toFixed(2) : 
+                   lastYearProfit.toFixed(2)} €
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                <Wallet className="w-6 h-6 text-amber-600" />
               </div>
             </div>
           </CardContent>

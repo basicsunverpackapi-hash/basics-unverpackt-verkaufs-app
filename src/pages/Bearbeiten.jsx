@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Package } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Plus, Pencil, Trash2, Package, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Bearbeiten() {
@@ -14,12 +13,13 @@ export default function Bearbeiten() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Sonstiges',
-    price_per_kg: '',
-    stock_kg: '',
+    price_per_unit: '',
+    unit_grams: '1000',
+    purchase_price_per_kg: '',
     image_url: '',
     active: true
   });
+  const [uploading, setUploading] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -54,26 +54,14 @@ export default function Bearbeiten() {
     }
   });
 
-  const categories = [
-    'Getreide & Hülsenfrüchte',
-    'Nüsse & Trockenfrüchte',
-    'Gewürze & Kräuter',
-    'Öle & Essige',
-    'Süßwaren',
-    'Müsli & Cerealien',
-    'Backzutaten',
-    'Pasta & Reis',
-    'Sonstiges'
-  ];
-
   const openDialog = (product = null) => {
     if (product) {
       setEditingProduct(product);
       setFormData({
         name: product.name || '',
-        category: product.category || 'Sonstiges',
-        price_per_kg: product.price_per_kg || '',
-        stock_kg: product.stock_kg || '',
+        price_per_unit: product.price_per_unit || '',
+        unit_grams: product.unit_grams || '1000',
+        purchase_price_per_kg: product.purchase_price_per_kg || '',
         image_url: product.image_url || '',
         active: product.active !== false
       });
@@ -81,9 +69,9 @@ export default function Bearbeiten() {
       setEditingProduct(null);
       setFormData({
         name: '',
-        category: 'Sonstiges',
-        price_per_kg: '',
-        stock_kg: '',
+        price_per_unit: '',
+        unit_grams: '1000',
+        purchase_price_per_kg: '',
         image_url: '',
         active: true
       });
@@ -96,13 +84,30 @@ export default function Bearbeiten() {
     setEditingProduct(null);
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const result = await base44.integrations.Core.UploadFile({ file });
+      setFormData({ ...formData, image_url: result.file_url });
+      toast.success('Bild hochgeladen');
+    } catch (error) {
+      toast.error('Bild-Upload fehlgeschlagen');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
     const data = {
       ...formData,
-      price_per_kg: parseFloat(formData.price_per_kg),
-      stock_kg: formData.stock_kg ? parseFloat(formData.stock_kg) : undefined
+      price_per_unit: parseFloat(formData.price_per_unit),
+      unit_grams: parseFloat(formData.unit_grams),
+      purchase_price_per_kg: formData.purchase_price_per_kg ? parseFloat(formData.purchase_price_per_kg) : undefined
     };
 
     if (editingProduct) {
@@ -145,17 +150,16 @@ export default function Bearbeiten() {
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h3 className="font-semibold text-lg">{product.name}</h3>
-                      <p className="text-sm text-gray-600">{product.category}</p>
+                      {product.purchase_price_per_kg && (
+                        <p className="text-sm text-gray-500">
+                          EK: {product.purchase_price_per_kg.toFixed(2)} €/kg
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-green-600">
-                        {product.price_per_kg?.toFixed(2)} € / kg
+                        {product.price_per_unit?.toFixed(2)} € / {product.unit_grams}g
                       </p>
-                      {product.stock_kg !== undefined && (
-                        <p className="text-sm text-gray-600">
-                          Bestand: {product.stock_kg.toFixed(1)} kg
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -214,51 +218,67 @@ export default function Bearbeiten() {
               />
             </div>
 
-            <div>
-              <label className="text-sm font-medium mb-2 block">Kategorie *</label>
-              <Select value={formData.category} onValueChange={(val) => setFormData({ ...formData, category: val })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Preis (€) *</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.price_per_unit}
+                  onChange={(e) => setFormData({ ...formData, price_per_unit: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">pro Gramm *</label>
+                <Input
+                  type="number"
+                  step="1"
+                  min="1"
+                  value={formData.unit_grams}
+                  onChange={(e) => setFormData({ ...formData, unit_grams: e.target.value })}
+                  placeholder="z.B. 100 oder 1000"
+                  required
+                />
+              </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Preis pro kg (€) *</label>
+              <label className="text-sm font-medium mb-2 block">Einkaufspreis pro kg (€)</label>
               <Input
                 type="number"
                 step="0.01"
                 min="0"
-                value={formData.price_per_kg}
-                onChange={(e) => setFormData({ ...formData, price_per_kg: e.target.value })}
-                required
+                value={formData.purchase_price_per_kg}
+                onChange={(e) => setFormData({ ...formData, purchase_price_per_kg: e.target.value })}
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Lagerbestand (kg)</label>
-              <Input
-                type="number"
-                step="0.1"
-                min="0"
-                value={formData.stock_kg}
-                onChange={(e) => setFormData({ ...formData, stock_kg: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Bild-URL</label>
-              <Input
-                type="url"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                placeholder="https://..."
-              />
+              <label className="text-sm font-medium mb-2 block">Bild hochladen</label>
+              <div className="flex gap-2">
+                <label className="flex-1">
+                  <div className="border-2 border-dashed rounded-lg p-3 text-center cursor-pointer hover:bg-gray-50 transition-colors">
+                    <Upload className="w-5 h-5 mx-auto mb-1 text-gray-400" />
+                    <span className="text-sm text-gray-600">
+                      {uploading ? 'Lädt hoch...' : 'Bild wählen'}
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                </label>
+              </div>
+              {formData.image_url && (
+                <div className="mt-2">
+                  <img src={formData.image_url} alt="Vorschau" className="w-24 h-24 object-cover rounded-lg" />
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 pt-4">

@@ -1,18 +1,36 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Calendar, Euro, Package } from 'lucide-react';
+import { ShoppingCart, Calendar, Package, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 export default function Verkäufe() {
+  const queryClient = useQueryClient();
+
   const { data: sales = [], isLoading } = useQuery({
     queryKey: ['sales'],
     queryFn: () => base44.entities.Sale.list('-date', 100)
   });
+
+  const deleteSaleMutation = useMutation({
+    mutationFn: (id) => base44.entities.Sale.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      toast.success('Verkauf storniert');
+    }
+  });
+
+  const handleCancel = (sale) => {
+    if (confirm('Verkauf wirklich stornieren?')) {
+      deleteSaleMutation.mutate(sale.id);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -66,10 +84,20 @@ export default function Verkäufe() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-green-600">
-                      {sale.total_amount?.toFixed(2)} €
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-green-600">
+                        {sale.total_amount?.toFixed(2)} €
+                      </div>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleCancel(sale)}
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
 
@@ -82,7 +110,7 @@ export default function Verkäufe() {
                         <div>
                           <span className="font-medium">{item.product_name}</span>
                           <span className="text-sm text-gray-500 ml-2">
-                            {item.weight_kg?.toFixed(2)} kg × {item.price_per_kg?.toFixed(2)} €/kg
+                            {(item.weight_kg * 1000)?.toFixed(0)} g
                           </span>
                         </div>
                       </div>

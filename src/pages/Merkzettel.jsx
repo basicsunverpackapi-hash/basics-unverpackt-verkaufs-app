@@ -88,7 +88,7 @@ export default function Merkzettel() {
 
   const handleAddReorder = () => {
     if (!selectedProductId) {
-      toast.error('Bitte wähle ein Produkt aus');
+      toast.error('Bitte wähle zuerst ein Produkt aus');
       return;
     }
 
@@ -97,7 +97,6 @@ export default function Merkzettel() {
     addReorderMutation.mutate({
       product_id: product.id,
       product_name: product.name,
-      estimated_kg: estimatedKg ? parseFloat(estimatedKg) : undefined,
       notes: reorderNotes || undefined
     });
   };
@@ -164,18 +163,6 @@ export default function Merkzettel() {
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Geschätzte Menge (kg)</label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    value={estimatedKg}
-                    onChange={(e) => setEstimatedKg(e.target.value)}
-                    placeholder="Optional"
-                  />
-                </div>
-
-                <div>
                   <label className="text-sm font-medium mb-2 block">Notizen</label>
                   <Textarea
                     value={reorderNotes}
@@ -214,14 +201,7 @@ export default function Merkzettel() {
                     {shoppingList.map((item) => (
                       <div key={item.id} className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-semibold">{item.product_name}</h4>
-                            {item.estimated_kg && (
-                              <span className="text-sm text-gray-600">
-                                ({item.estimated_kg} kg)
-                              </span>
-                            )}
-                          </div>
+                          <h4 className="font-semibold mb-1">{item.product_name}</h4>
                           {item.notes && (
                             <p className="text-sm text-gray-600">{item.notes}</p>
                           )}
