@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -7,10 +7,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Search, Plus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import SaleDialog from '../components/SaleDialog';
+import { toast } from 'sonner';
 
 export default function Produkte() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const queryClient = useQueryClient();
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
@@ -29,11 +35,34 @@ export default function Produkte() {
     'Sonstiges'
   ];
 
+  const createSaleMutation = useMutation({
+    mutationFn: (saleData) => base44.entities.Sale.create(saleData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      toast.success('Verkauf erfolgreich erfasst!');
+    }
+  });
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory && product.active !== false;
   });
+
+  const handleProductClick = (product) => {
+    setSelectedProduct(product);
+    setDialogOpen(true);
+  };
+
+  const handleSaleComplete = async (saleItem) => {
+    const saleData = {
+      date: new Date().toISOString(),
+      items: [saleItem],
+      total_amount: saleItem.total_price,
+      payment_method: 'Bargeld'
+    };
+    createSaleMutation.mutate(saleData);
+  };
 
   return (
     <div className="space-y-6">
@@ -93,7 +122,11 @@ export default function Produkte() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredProducts.map((product) => (
-            <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+            <Card 
+              key={product.id} 
+              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => handleProductClick(product)}
+            >
               <div className="aspect-square bg-gradient-to-br from-green-100 to-emerald-100 relative">
                 {product.image_url ? (
                   <img
@@ -132,6 +165,13 @@ export default function Produkte() {
           ))}
         </div>
       )}
+
+      <SaleDialog
+        product={selectedProduct}
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onComplete={handleSaleComplete}
+      />
     </div>
   );
 }
