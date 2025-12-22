@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Euro, ShoppingBag, Calendar } from 'lucide-react';
+import { TrendingUp, Euro, ShoppingBag, Calendar, Wallet } from 'lucide-react';
 import { format, startOfDay, subDays, subYears, isAfter } from 'date-fns';
 import { de } from 'date-fns/locale';
 
@@ -19,6 +19,21 @@ export default function Analyse() {
     queryKey: ['products'],
     queryFn: () => base44.entities.Product.list()
   });
+
+  // Einnahmen berechnen (Verkaufspreis - Einkaufspreis)
+  const calculateProfit = (sale) => {
+    let profit = 0;
+    sale.items?.forEach(item => {
+      const product = products.find(p => p.id === item.product_id);
+      if (product && product.purchase_price_per_kg) {
+        const cost = item.weight_kg * product.purchase_price_per_kg;
+        profit += (item.total_price - cost);
+      } else {
+        profit += item.total_price;
+      }
+    });
+    return profit;
+  };
 
   // Statistiken berechnen
   const today = startOfDay(new Date());
