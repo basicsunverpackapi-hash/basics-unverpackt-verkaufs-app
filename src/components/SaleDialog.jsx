@@ -171,24 +171,26 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 pt-2">
-              <Button variant="outline" onClick={handleBack} className="flex-1">
-                Zurück
-              </Button>
+            <div className="flex flex-col gap-3 pt-2">
               <Button 
                 onClick={handlePassend}
-                variant="outline"
-                className="flex-1"
+                className="w-full bg-green-600 hover:bg-green-700 text-lg py-6 font-semibold shadow-lg"
               >
-                Passend
+                <Banknote className="w-5 h-5 mr-2" />
+                Passend bezahlt
               </Button>
-              <Button 
-                onClick={handleComplete} 
-                disabled={!receivedMoney || change < 0}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-              >
-                Abschließen
-              </Button>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={handleBack} className="flex-1">
+                  Zurück
+                </Button>
+                <Button 
+                  onClick={handleComplete} 
+                  disabled={!receivedMoney || change < 0}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                >
+                  Abschließen
+                </Button>
+              </div>
             </div>
           </div>
         )}

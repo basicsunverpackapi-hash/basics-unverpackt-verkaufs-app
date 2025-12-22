@@ -1,17 +1,17 @@
+import Analyse from './pages/Analyse';
+import Bearbeiten from './pages/Bearbeiten';
+import Merkzettel from './pages/Merkzettel';
 import Produkte from './pages/Produkte';
 import verkUfe from './pages/Verkäufe';
-import Analyse from './pages/Analyse';
-import Merkzettel from './pages/Merkzettel';
-import Bearbeiten from './pages/Bearbeiten';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Analyse": Analyse,
+    "Bearbeiten": Bearbeiten,
+    "Merkzettel": Merkzettel,
     "Produkte": Produkte,
     "Verkäufe": verkUfe,
-    "Analyse": Analyse,
-    "Merkzettel": Merkzettel,
-    "Bearbeiten": Bearbeiten,
 }
 
 export const pagesConfig = {

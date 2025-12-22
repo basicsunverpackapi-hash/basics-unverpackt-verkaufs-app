@@ -127,29 +127,34 @@ export default function Analyse() {
       </div>
 
       {/* Time Filter */}
-      <div className="flex gap-3">
-        <Button
-          onClick={() => setTimeFilter('today')}
-          variant={timeFilter === 'today' ? 'default' : 'outline'}
-          className={timeFilter === 'today' ? 'bg-green-600' : ''}
-        >
-          Heute
-        </Button>
-        <Button
-          onClick={() => setTimeFilter('7days')}
-          variant={timeFilter === '7days' ? 'default' : 'outline'}
-          className={timeFilter === '7days' ? 'bg-green-600' : ''}
-        >
-          Letzte 7 Tage
-        </Button>
-        <Button
-          onClick={() => setTimeFilter('year')}
-          variant={timeFilter === 'year' ? 'default' : 'outline'}
-          className={timeFilter === 'year' ? 'bg-green-600' : ''}
-        >
-          Letztes Jahr
-        </Button>
-      </div>
+      <Card className="p-2 bg-white shadow-sm">
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setTimeFilter('today')}
+            variant={timeFilter === 'today' ? 'default' : 'ghost'}
+            className={`flex-1 ${timeFilter === 'today' ? 'bg-green-600 hover:bg-green-700 shadow-md' : 'hover:bg-gray-100'}`}
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            Heute
+          </Button>
+          <Button
+            onClick={() => setTimeFilter('7days')}
+            variant={timeFilter === '7days' ? 'default' : 'ghost'}
+            className={`flex-1 ${timeFilter === '7days' ? 'bg-green-600 hover:bg-green-700 shadow-md' : 'hover:bg-gray-100'}`}
+          >
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Letzte 7 Tage
+          </Button>
+          <Button
+            onClick={() => setTimeFilter('year')}
+            variant={timeFilter === 'year' ? 'default' : 'ghost'}
+            className={`flex-1 ${timeFilter === 'year' ? 'bg-green-600 hover:bg-green-700 shadow-md' : 'hover:bg-gray-100'}`}
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            Letztes Jahr
+          </Button>
+        </div>
+      </Card>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -251,26 +256,37 @@ export default function Analyse() {
       {/* Top Products */}
       <Card>
         <CardHeader>
-          <CardTitle>Top 5 Produkte nach Umsatz</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-green-600" />
+            Top 5 Produkte nach Umsatz
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {topProducts.map((product, index) => {
               const maxRevenue = topProducts[0]?.revenue || 1;
               const percentage = (product.revenue / maxRevenue) * 100;
+              const medals = ['🥇', '🥈', '🥉'];
               return (
-                <div key={index}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium">{product.name}</span>
-                    <span className="text-green-600 font-semibold">{product.revenue.toFixed(2)} €</span>
+                <Card key={index} className="p-4 hover:shadow-md transition-shadow bg-gradient-to-r from-white to-green-50">
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl w-8 text-center">
+                      {medals[index] || `${index + 1}.`}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold text-gray-900">{product.name}</span>
+                        <span className="text-green-600 font-bold text-lg">{product.revenue.toFixed(2)} €</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full transition-all duration-500 shadow-sm"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-green-600 h-2 rounded-full transition-all"
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
+                </Card>
               );
             })}
           </div>
