@@ -19,6 +19,7 @@ export default function Bearbeiten() {
     image_url: '',
     active: true
   });
+  const [priceMode, setPriceMode] = useState('gram'); // 'gram' oder 'kg'
   const [uploading, setUploading] = useState(false);
 
   const queryClient = useQueryClient();
@@ -65,6 +66,7 @@ export default function Bearbeiten() {
         image_url: product.image_url || '',
         active: product.active !== false
       });
+      setPriceMode('gram');
     } else {
       setEditingProduct(null);
       setFormData({
@@ -75,6 +77,7 @@ export default function Bearbeiten() {
         image_url: '',
         active: true
       });
+      setPriceMode('gram');
     }
     setDialogOpen(true);
   };
@@ -103,10 +106,18 @@ export default function Bearbeiten() {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    let pricePerUnit = parseFloat(formData.price_per_unit);
+    let unitGrams = parseFloat(formData.unit_grams);
+    
+    // Wenn Preis pro kg eingegeben wurde, in Preis pro unitGrams umrechnen
+    if (priceMode === 'kg') {
+      pricePerUnit = (pricePerUnit / 1000) * unitGrams;
+    }
+    
     const data = {
       ...formData,
-      price_per_unit: parseFloat(formData.price_per_unit),
-      unit_grams: parseFloat(formData.unit_grams),
+      price_per_unit: pricePerUnit,
+      unit_grams: unitGrams,
       purchase_price_per_kg: formData.purchase_price_per_kg ? parseFloat(formData.purchase_price_per_kg) : undefined
     };
 
@@ -218,29 +229,68 @@ export default function Bearbeiten() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Preis (€) *</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.price_per_unit}
-                  onChange={(e) => setFormData({ ...formData, price_per_unit: e.target.value })}
-                  required
-                />
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  onClick={() => setPriceMode('gram')}
+                  variant={priceMode === 'gram' ? 'default' : 'outline'}
+                  className={`flex-1 ${priceMode === 'gram' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                >
+                  Preis pro Gramm
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setPriceMode('kg')}
+                  variant={priceMode === 'kg' ? 'default' : 'outline'}
+                  className={`flex-1 ${priceMode === 'kg' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                >
+                  Preis pro Kilo
+                </Button>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">pro Gramm *</label>
-                <Input
-                  type="number"
-                  step="1"
-                  min="1"
-                  value={formData.unit_grams}
-                  onChange={(e) => setFormData({ ...formData, unit_grams: e.target.value })}
-                  placeholder="z.B. 100 oder 1000"
-                  required
-                />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Preis (€) * {priceMode === 'kg' && 'pro kg'}
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price_per_unit}
+                    onChange={(e) => setFormData({ ...formData, price_per_unit: e.target.value })}
+                    required
+                  />
+                </div>
+                {priceMode === 'gram' && (
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">pro Gramm *</label>
+                    <Input
+                      type="number"
+                      step="1"
+                      min="1"
+                      value={formData.unit_grams}
+                      onChange={(e) => setFormData({ ...formData, unit_grams: e.target.value })}
+                      placeholder="z.B. 100 oder 1000"
+                      required
+                    />
+                  </div>
+                )}
+                {priceMode === 'kg' && (
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Einheit (Gramm) *</label>
+                    <Input
+                      type="number"
+                      step="1"
+                      min="1"
+                      value={formData.unit_grams}
+                      onChange={(e) => setFormData({ ...formData, unit_grams: e.target.value })}
+                      placeholder="z.B. 100 oder 1000"
+                      required
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

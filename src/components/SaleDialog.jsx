@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, Banknote } from 'lucide-react';
+import { ArrowRight, Banknote, Coins } from 'lucide-react';
 
 export default function SaleDialog({ product, open, onClose, onComplete }) {
   const [step, setStep] = useState(1); // 1 = Gewicht/Betrag, 2 = Bezahlung
@@ -23,6 +23,43 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
   
   const totalPrice = weightKg * pricePerKg;
   const change = receivedMoney ? parseFloat(receivedMoney) - totalPrice : 0;
+
+  // Rückgeld in Münzen/Scheine aufteilen
+  const calculateChange = (amount) => {
+    if (amount <= 0) return [];
+    const denominations = [
+      { value: 500, label: '500€ Schein' },
+      { value: 200, label: '200€ Schein' },
+      { value: 100, label: '100€ Schein' },
+      { value: 50, label: '50€ Schein' },
+      { value: 20, label: '20€ Schein' },
+      { value: 10, label: '10€ Schein' },
+      { value: 5, label: '5€ Schein' },
+      { value: 2, label: '2€' },
+      { value: 1, label: '1€' },
+      { value: 0.50, label: '50ct' },
+      { value: 0.20, label: '20ct' },
+      { value: 0.10, label: '10ct' },
+      { value: 0.05, label: '5ct' },
+      { value: 0.02, label: '2ct' },
+      { value: 0.01, label: '1ct' }
+    ];
+
+    const result = [];
+    let remaining = Math.round(amount * 100) / 100;
+
+    for (const denom of denominations) {
+      const count = Math.floor(remaining / denom.value);
+      if (count > 0) {
+        result.push({ count, label: denom.label });
+        remaining = Math.round((remaining - count * denom.value) * 100) / 100;
+      }
+    }
+
+    return result;
+  };
+
+  const changeBreakdown = change > 0 ? calculateChange(change) : [];
 
   const handleComplete = () => {
     if (weightKg > 0) {
@@ -159,14 +196,32 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
                 autoFocus
               />
               {receivedMoney && (
-                <Card className={`p-3 mt-3 ${change >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200'}`}>
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{change >= 0 ? 'Rückgeld:' : 'Fehlbetrag:'}</span>
-                    <span className={`text-xl font-bold ${change >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                      {Math.abs(change).toFixed(2)} €
-                    </span>
-                  </div>
-                </Card>
+                <>
+                  <Card className={`p-3 mt-3 ${change >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-red-50 border-red-200'}`}>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{change >= 0 ? 'Rückgeld:' : 'Fehlbetrag:'}</span>
+                      <span className={`text-xl font-bold ${change >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                        {Math.abs(change).toFixed(2)} €
+                      </span>
+                    </div>
+                  </Card>
+                  
+                  {change > 0 && changeBreakdown.length > 0 && (
+                    <Card className="p-3 mt-2 bg-gray-50 border-gray-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Coins className="w-4 h-4 text-gray-600" />
+                        <span className="text-sm font-medium text-gray-700">Rückgeld-Aufteilung:</span>
+                      </div>
+                      <div className="space-y-1">
+                        {changeBreakdown.map((item, index) => (
+                          <div key={index} className="flex justify-between text-sm">
+                            <span className="text-gray-600">{item.count}x {item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  )}
+                </>
               )}
             </div>
 
