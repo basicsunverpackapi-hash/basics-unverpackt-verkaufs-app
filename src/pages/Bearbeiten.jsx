@@ -58,6 +58,7 @@ export default function Bearbeiten() {
   const openDialog = (product = null) => {
     if (product) {
       setEditingProduct(product);
+      const isKgMode = product.unit_grams === 1000;
       setFormData({
         name: product.name || '',
         price_per_unit: product.price_per_unit || '',
@@ -66,7 +67,7 @@ export default function Bearbeiten() {
         image_url: product.image_url || '',
         active: product.active !== false
       });
-      setPriceMode('gram');
+      setPriceMode(isKgMode ? 'kg' : 'gram');
     } else {
       setEditingProduct(null);
       setFormData({
@@ -111,6 +112,7 @@ export default function Bearbeiten() {
     
     // Wenn Preis pro kg eingegeben wurde, in Preis pro unitGrams umrechnen
     if (priceMode === 'kg') {
+      unitGrams = unitGrams * 1000; // z.B. 1 -> 1000g
       pricePerUnit = (pricePerUnit / 1000) * unitGrams;
     }
     
@@ -169,7 +171,7 @@ export default function Bearbeiten() {
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-green-600">
-                        {product.price_per_unit?.toFixed(2)} € / {product.unit_grams}g
+                        {product.price_per_unit?.toFixed(2)} € / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
                       </p>
                     </div>
                   </div>
@@ -233,7 +235,10 @@ export default function Bearbeiten() {
               <div className="flex gap-2">
                 <Button
                   type="button"
-                  onClick={() => setPriceMode('gram')}
+                  onClick={() => {
+                    setPriceMode('gram');
+                    setFormData({ ...formData, unit_grams: '1000' });
+                  }}
                   variant={priceMode === 'gram' ? 'default' : 'outline'}
                   className={`flex-1 ${priceMode === 'gram' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                 >
@@ -241,7 +246,10 @@ export default function Bearbeiten() {
                 </Button>
                 <Button
                   type="button"
-                  onClick={() => setPriceMode('kg')}
+                  onClick={() => {
+                    setPriceMode('kg');
+                    setFormData({ ...formData, unit_grams: '1' });
+                  }}
                   variant={priceMode === 'kg' ? 'default' : 'outline'}
                   className={`flex-1 ${priceMode === 'kg' ? 'bg-green-600 hover:bg-green-700' : ''}`}
                 >
@@ -251,9 +259,7 @@ export default function Bearbeiten() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Preis (€) * {priceMode === 'kg' && 'pro kg'}
-                  </label>
+                  <label className="text-sm font-medium mb-2 block">Preis (€) *</label>
                   <Input
                     type="number"
                     step="0.01"
@@ -279,14 +285,14 @@ export default function Bearbeiten() {
                 )}
                 {priceMode === 'kg' && (
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Einheit (Gramm) *</label>
+                    <label className="text-sm font-medium mb-2 block">pro Kilo *</label>
                     <Input
                       type="number"
-                      step="1"
-                      min="1"
+                      step="0.1"
+                      min="0.1"
                       value={formData.unit_grams}
                       onChange={(e) => setFormData({ ...formData, unit_grams: e.target.value })}
-                      placeholder="z.B. 100 oder 1000"
+                      placeholder="z.B. 1 oder 2"
                       required
                     />
                   </div>
