@@ -121,9 +121,9 @@ export default function Analyse() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Analyse & Statistiken</h2>
-        <p className="text-gray-600 mt-1">Übersicht über Verkäufe und Umsätze</p>
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-6 shadow-lg text-white">
+        <h2 className="text-3xl font-bold">Analyse & Statistiken</h2>
+        <p className="text-purple-100 mt-2">Übersicht über Verkäufe und Umsätze</p>
       </div>
 
       {/* Time Filter */}

@@ -132,13 +132,13 @@ export default function Bearbeiten() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Produkte bearbeiten</h2>
-          <p className="text-gray-600 mt-1">Produkte verwalten, bearbeiten und erstellen</p>
+          <h2 className="text-3xl font-bold">Produkte bearbeiten</h2>
+          <p className="text-amber-100 mt-2">Produkte verwalten und erstellen</p>
         </div>
-        <Button onClick={() => openDialog()} className="bg-green-600 hover:bg-green-700">
-          <Plus className="w-4 h-4 mr-2" />
+        <Button onClick={() => openDialog()} className="bg-white text-amber-700 hover:bg-amber-50 font-bold shadow-lg rounded-xl px-6 py-3">
+          <Plus className="w-5 h-5 mr-2" />
           Neues Produkt
         </Button>
       </div>

@@ -39,37 +39,40 @@ export default function Layout({ children, currentPageName }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50">
       {/* Header */}
-      <header className="bg-white border-b border-green-100 sticky top-0 z-50 shadow-sm">
+      <header className="bg-white/80 backdrop-blur-md border-b border-green-200/50 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+              <div className="w-11 h-11 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200">
                 <Package className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900">Basics Unverpackt</h1>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">Basics Unverpackt</h1>
+                <p className="text-xs text-gray-500 hidden sm:block">Warenwirtschaft</p>
+              </div>
             </div>
             
             <button
               onClick={handleSync}
               disabled={syncing}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 disabled:opacity-50 shadow-md hover:shadow-lg"
             >
               {syncing ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span className="hidden sm:inline">Synchronisiere...</span>
+                  <span className="hidden sm:inline font-medium">Synchronisiere...</span>
                 </>
               ) : lastSync ? (
                 <>
                   <CheckCircle className="w-4 h-4" />
-                  <span className="hidden sm:inline">Daten synchronisiert</span>
+                  <span className="hidden sm:inline font-medium">Synchronisiert</span>
                 </>
               ) : (
                 <>
                   <RefreshCw className="w-4 h-4" />
-                  <span className="hidden sm:inline">Sync</span>
+                  <span className="hidden sm:inline font-medium">Sync</span>
                 </>
               )}
             </button>
@@ -78,9 +81,9 @@ export default function Layout({ children, currentPageName }) {
       </header>
 
       {/* Navigation */}
-      <nav className="bg-white border-b border-green-100">
+      <nav className="bg-white/60 backdrop-blur-md border-b border-green-200/50 sticky top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex overflow-x-auto">
+          <div className="flex overflow-x-auto scrollbar-hide">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPageName === item.path;
@@ -88,16 +91,16 @@ export default function Layout({ children, currentPageName }) {
                 <Link
                   key={item.path}
                   to={createPageUrl(item.path)}
-                  className={`flex items-center gap-2 px-4 py-3 border-b-2 whitespace-nowrap transition-colors relative ${
+                  className={`flex items-center gap-2 px-5 py-4 border-b-3 whitespace-nowrap transition-all duration-200 relative group ${
                     isActive
-                      ? 'border-green-600 text-green-600 font-medium'
-                      : 'border-transparent text-gray-600 hover:text-green-600 hover:border-green-300'
+                      ? 'border-green-600 text-green-700 font-semibold bg-green-50/50'
+                      : 'border-transparent text-gray-600 hover:text-green-600 hover:bg-green-50/30'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-105'}`} />
                   <span className="text-sm">{item.name}</span>
                   {item.badge > 0 && (
-                    <Badge className="ml-1 bg-orange-500 hover:bg-orange-600 text-white px-1.5 py-0 h-5 text-xs">
+                    <Badge className="ml-1 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-2 py-0.5 h-5 text-xs font-bold shadow-md animate-pulse">
                       {item.badge}
                     </Badge>
                   )}
@@ -109,14 +112,19 @@ export default function Layout({ children, currentPageName }) {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {shoppingList.length > 0 && currentPageName !== 'Merkzettel' && (
-          <div className="mb-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 text-orange-800">
-              <ClipboardList className="w-5 h-5" />
-              <span className="font-medium">
-                {shoppingList.length} {shoppingList.length === 1 ? 'Produkt muss' : 'Produkte müssen'} nachbestellt werden
-              </span>
+          <div className="mb-6 bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-300 rounded-2xl p-5 shadow-md hover:shadow-lg transition-shadow duration-200">
+            <div className="flex items-center gap-3 text-orange-900">
+              <div className="p-2 bg-orange-200 rounded-lg">
+                <ClipboardList className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="font-semibold text-base">
+                  {shoppingList.length} {shoppingList.length === 1 ? 'Produkt muss' : 'Produkte müssen'} nachbestellt werden
+                </span>
+                <p className="text-sm text-orange-700 mt-0.5">Bitte zeitnah bestellen</p>
+              </div>
             </div>
           </div>
         )}

@@ -51,20 +51,20 @@ export default function Produkte() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Produkte</h2>
-        <p className="text-gray-600 mt-1">Übersicht aller verfügbaren Produkte</p>
+      <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 shadow-lg text-white">
+        <h2 className="text-3xl font-bold">Produkte</h2>
+        <p className="text-green-100 mt-2">Wähle ein Produkt zum Verkaufen</p>
       </div>
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
         <Input
           type="text"
           placeholder="Produkt suchen..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-12 h-12 text-base rounded-xl border-2 focus:border-green-500 shadow-sm"
         />
       </div>
 
@@ -91,33 +91,38 @@ export default function Produkte() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filteredProducts.map((product) => (
             <Card 
               key={product.id} 
-              className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+              className="overflow-hidden hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-green-300 rounded-2xl"
               onClick={() => handleProductClick(product)}
             >
-              <div className="aspect-square bg-gradient-to-br from-green-100 to-emerald-100 relative">
+              <div className="aspect-square bg-gradient-to-br from-green-100 via-emerald-50 to-green-100 relative overflow-hidden">
                 {product.image_url ? (
                   <img
                     src={product.image_url}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-6xl text-green-600 font-bold">
-                      {product.name?.[0]?.toUpperCase()}
-                    </span>
+                    <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-xl">
+                      <span className="text-5xl text-white font-bold">
+                        {product.name?.[0]?.toUpperCase()}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
-                <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold text-green-600">
-                    {product.price_per_unit?.toFixed(2)} € / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
+              <CardContent className="p-5 bg-white">
+                <h3 className="font-bold text-gray-900 mb-2 text-lg">{product.name}</h3>
+                <div className="flex justify-between items-center bg-green-50 rounded-lg p-2 border border-green-200">
+                  <span className="text-xl font-bold text-green-700">
+                    {product.price_per_unit?.toFixed(2)} €
+                  </span>
+                  <span className="text-sm text-gray-600 font-medium">
+                    / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
                   </span>
                 </div>
               </CardContent>

@@ -103,31 +103,35 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
         onClose();
       }
     }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl">{product.name}</DialogTitle>
-          <p className="text-sm text-gray-500">
-            {product.price_per_unit?.toFixed(2)} € / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
-          </p>
+          <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-4 -mt-6 -mx-6 mb-4 text-white shadow-lg">
+            <DialogTitle className="text-2xl font-bold">{product.name}</DialogTitle>
+            <p className="text-green-100 mt-1 font-medium">
+              {product.price_per_unit?.toFixed(2)} € / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
+            </p>
+          </div>
         </DialogHeader>
 
         {step === 1 ? (
           <div className="space-y-4">
             {/* Mode Toggle */}
-            <div className="flex gap-2">
+            <div className="flex gap-3 p-1 bg-gray-100 rounded-xl">
               <Button
+                type="button"
                 onClick={() => setMode('weight')}
-                variant={mode === 'weight' ? 'default' : 'outline'}
-                className={mode === 'weight' ? 'flex-1 bg-green-600' : 'flex-1'}
+                variant="ghost"
+                className={`flex-1 rounded-lg transition-all duration-200 ${mode === 'weight' ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md' : 'hover:bg-gray-200'}`}
               >
-                Gewicht
+                <span className="font-semibold">Gewicht</span>
               </Button>
               <Button
+                type="button"
                 onClick={() => setMode('money')}
-                variant={mode === 'money' ? 'default' : 'outline'}
-                className={mode === 'money' ? 'flex-1 bg-green-600' : 'flex-1'}
+                variant="ghost"
+                className={`flex-1 rounded-lg transition-all duration-200 ${mode === 'money' ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md' : 'hover:bg-gray-200'}`}
               >
-                Betrag
+                <span className="font-semibold">Betrag</span>
               </Button>
             </div>
 
@@ -148,22 +152,22 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
             </div>
 
             {/* Price Display */}
-            <Card className="p-4 bg-green-50 border-green-200">
+            <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 shadow-lg rounded-xl">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">Preis</p>
-                <p className="text-3xl font-bold text-green-600">{totalPrice.toFixed(2)} €</p>
+                <p className="text-sm font-semibold text-gray-600 mb-2">Zu zahlen</p>
+                <p className="text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">{totalPrice.toFixed(2)} €</p>
               </div>
             </Card>
 
             {/* Actions */}
             <div className="flex gap-3 pt-2">
-              <Button variant="outline" onClick={onClose} className="flex-1">
+              <Button variant="outline" onClick={onClose} className="flex-1 rounded-xl border-2 hover:bg-gray-100">
                 Abbrechen
               </Button>
               <Button 
                 onClick={handleNext} 
                 disabled={weightKg <= 0}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
               >
                 Weiter <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -172,11 +176,11 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
         ) : (
           <div className="space-y-4">
             {/* Price Summary */}
-            <Card className="p-4 bg-green-50 border-green-200">
+            <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 shadow-lg rounded-xl">
               <div className="text-center">
-                <p className="text-sm text-gray-600 mb-1">Zu zahlen</p>
-                <p className="text-3xl font-bold text-green-600">{totalPrice.toFixed(2)} €</p>
-                <p className="text-sm text-gray-500 mt-1">{(weightKg * 1000).toFixed(0)} g</p>
+                <p className="text-sm font-semibold text-gray-600 mb-2">Zu zahlen</p>
+                <p className="text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">{totalPrice.toFixed(2)} €</p>
+                <p className="text-base text-gray-600 mt-2 font-medium">{(weightKg * 1000).toFixed(0)} g</p>
               </div>
             </Card>
 
@@ -229,19 +233,19 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
             <div className="flex flex-col gap-3 pt-2">
               <Button 
                 onClick={handlePassend}
-                className="w-full bg-green-600 hover:bg-green-700 text-lg py-6 font-semibold shadow-lg"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white text-lg py-7 font-bold shadow-xl hover:shadow-2xl transition-all rounded-xl"
               >
-                <Banknote className="w-5 h-5 mr-2" />
+                <Banknote className="w-6 h-6 mr-2" />
                 Passend bezahlt
               </Button>
               <div className="flex gap-3">
-                <Button variant="outline" onClick={handleBack} className="flex-1">
+                <Button variant="outline" onClick={handleBack} className="flex-1 rounded-xl border-2 hover:bg-gray-100">
                   Zurück
                 </Button>
                 <Button 
                   onClick={handleComplete} 
                   disabled={!receivedMoney || change < 0}
-                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg disabled:opacity-50"
                 >
                   Abschließen
                 </Button>

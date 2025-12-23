@@ -121,9 +121,9 @@ export default function Merkzettel() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Merkzettel</h2>
-        <p className="text-gray-600 mt-1">Nachbestellungen und Schulden verwalten</p>
+      <div className="bg-gradient-to-r from-pink-600 to-rose-600 rounded-2xl p-6 shadow-lg text-white">
+        <h2 className="text-3xl font-bold">Merkzettel</h2>
+        <p className="text-pink-100 mt-2">Nachbestellungen und Schulden verwalten</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
