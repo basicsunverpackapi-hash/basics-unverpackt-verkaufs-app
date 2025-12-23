@@ -107,7 +107,7 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
         <DialogHeader>
           <DialogTitle className="text-xl">{product.name}</DialogTitle>
           <p className="text-sm text-gray-500">
-            {product.price_per_unit?.toFixed(2)} € / {product.unit_grams}g
+            {product.price_per_unit?.toFixed(2)} € / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
           </p>
         </DialogHeader>
 

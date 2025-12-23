@@ -117,7 +117,7 @@ export default function Produkte() {
                 <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-bold text-green-600">
-                    {product.price_per_unit?.toFixed(2)} € / {product.unit_grams}g
+                    {product.price_per_unit?.toFixed(2)} € / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
                   </span>
                 </div>
               </CardContent>
