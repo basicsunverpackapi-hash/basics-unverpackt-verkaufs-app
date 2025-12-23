@@ -34,14 +34,8 @@ export default function Verkäufe() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Verkäufe</h2>
-          <p className="text-gray-600 mt-1">Übersicht aller getätigten Verkäufe</p>
-        </div>
-        <Badge variant="secondary" className="text-lg px-4 py-2">
-          {sales.length} Verkäufe
-        </Badge>
+      <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-6 shadow-lg text-white">
+        <h2 className="text-3xl font-bold">Verkäufe</h2>
       </div>
 
       {isLoading ? (
