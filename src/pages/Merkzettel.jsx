@@ -121,7 +121,7 @@ export default function Merkzettel() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-pink-600 to-rose-600 rounded-2xl p-6 shadow-lg text-white">
+      <div className="bg-gradient-to-r from-pink-500 to-rose-500 rounded-2xl p-6 shadow-lg text-white">
         <h2 className="text-3xl font-bold">Merkzettel</h2>
         <p className="text-pink-100 mt-2">Nachbestellungen und Schulden verwalten</p>
       </div>

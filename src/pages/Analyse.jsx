@@ -194,20 +194,6 @@ export default function Analyse() {
           </CardContent>
         </Card>
 
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-700">Verkäufe</p>
-                <p className="text-2xl font-bold text-blue-900">{filteredSales.length}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <ShoppingBag className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="bg-purple-50 border-purple-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -225,7 +211,46 @@ export default function Analyse() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-700">Verkäufe</p>
+                <p className="text-2xl font-bold text-blue-900">{filteredSales.length}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <ShoppingBag className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Gesamtübersicht */}
+      <Card className="bg-gradient-to-r from-slate-50 to-gray-100 border-2 border-gray-300">
+        <CardContent className="p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Gesamtübersicht (alle Zeiträume)</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Einnahmen</p>
+              <p className="text-xl font-bold text-green-700">{totalProfit.toFixed(2)} €</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Ausgaben</p>
+              <p className="text-xl font-bold text-red-700">{(totalRevenue - totalProfit).toFixed(2)} €</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Umsatz</p>
+              <p className="text-xl font-bold text-purple-700">{totalRevenue.toFixed(2)} €</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-1">Verkäufe</p>
+              <p className="text-xl font-bold text-blue-700">{sales.length}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Chart */}
       <Card>

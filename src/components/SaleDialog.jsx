@@ -103,11 +103,11 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
         onClose();
       }
     }}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl p-4 -mt-6 -mx-6 mb-4 text-white shadow-lg">
-            <DialogTitle className="text-2xl font-bold">{product.name}</DialogTitle>
-            <p className="text-green-100 mt-1 font-medium">
+          <div className="bg-green-100 border-b-2 border-green-200 p-4 -mt-6 -mx-6 mb-4">
+            <DialogTitle className="text-2xl font-bold text-gray-900">{product.name}</DialogTitle>
+            <p className="text-gray-600 mt-1 font-medium">
               {product.price_per_unit?.toFixed(2)} € / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
             </p>
           </div>

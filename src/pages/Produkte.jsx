@@ -50,12 +50,6 @@ export default function Produkte() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-6 shadow-lg text-white">
-        <h2 className="text-3xl font-bold">Produkte</h2>
-        <p className="text-green-100 mt-2">Wähle ein Produkt zum Verkaufen</p>
-      </div>
-
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
