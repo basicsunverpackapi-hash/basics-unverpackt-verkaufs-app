@@ -22,8 +22,13 @@ export default function Produkte() {
 
   const createSaleMutation = useMutation({
     mutationFn: (saleData) => offlineClient.entities.Sale.create(saleData),
-    onSuccess: () => {
+    onSuccess: (newSale) => {
+      // Query invalidieren und gleichzeitig Cache aktualisieren
       queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.setQueryData(['sales'], (oldData) => {
+        if (!oldData) return [newSale];
+        return [newSale, ...oldData];
+      });
       toast.success('Verkauf erfolgreich erfasst!');
     }
   });

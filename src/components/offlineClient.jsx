@@ -12,20 +12,43 @@ entityNames.forEach(entityName => {
   offlineClient.entities[entityName] = {
     // Liste abrufen
     async list(sort, limit) {
+      let data;
+      
       if (isOnline()) {
         try {
-          const data = await base44.entities[entityName].list(sort, limit);
+          data = await base44.entities[entityName].list(sort, limit);
           // Online-Daten lokal speichern
           offlineStorage.saveLocal(entityName, data);
           return data;
         } catch (error) {
           console.warn(`Online-Abruf fehlgeschlagen für ${entityName}, nutze lokale Daten`, error);
-          return offlineStorage.getLocal(entityName);
+          data = offlineStorage.getLocal(entityName);
         }
       } else {
         // Offline: Lokale Daten zurückgeben
-        return offlineStorage.getLocal(entityName);
+        data = offlineStorage.getLocal(entityName);
       }
+      
+      // Lokale Sortierung anwenden
+      if (sort && data.length > 0) {
+        const sortField = sort.startsWith('-') ? sort.slice(1) : sort;
+        const sortOrder = sort.startsWith('-') ? -1 : 1;
+        
+        data = [...data].sort((a, b) => {
+          const aVal = a[sortField];
+          const bVal = b[sortField];
+          if (aVal === bVal) return 0;
+          if (aVal > bVal) return sortOrder;
+          return -sortOrder;
+        });
+      }
+      
+      // Limit anwenden
+      if (limit && data.length > limit) {
+        data = data.slice(0, limit);
+      }
+      
+      return data;
     },
 
     // Filtern (nur lokal)

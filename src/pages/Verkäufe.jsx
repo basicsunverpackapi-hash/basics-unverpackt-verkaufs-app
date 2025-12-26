@@ -15,12 +15,19 @@ export default function Verkäufe() {
 
   const { data: sales = [], isLoading } = useQuery({
     queryKey: ['sales'],
-    queryFn: () => offlineClient.entities.Sale.list('-date', 100)
+    queryFn: () => offlineClient.entities.Sale.list('-date', 100),
+    staleTime: 0,
+    refetchOnMount: 'always'
   });
 
   const deleteSaleMutation = useMutation({
     mutationFn: (id) => offlineClient.entities.Sale.delete(id),
-    onSuccess: () => {
+    onSuccess: (_, deletedId) => {
+      // Query invalidieren und gleichzeitig Cache aktualisieren
+      queryClient.setQueryData(['sales'], (oldData) => {
+        if (!oldData) return [];
+        return oldData.filter(sale => sale.id !== deletedId);
+      });
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       toast.success('Verkauf storniert');
     }
