@@ -1,5 +1,5 @@
 import { base44 } from '@/api/base44Client';
-import { offlineStorage, isOnline } from './offlineStorage.js';
+import { offlineStorage, isOnline } from '@/components/offlineStorage';
 
 // Offline-fähiger Wrapper für base44 Client
 export const offlineClient = {
