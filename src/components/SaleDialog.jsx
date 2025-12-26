@@ -46,13 +46,15 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
     ];
 
     const result = [];
-    let remaining = Math.round(amount * 100) / 100;
+    // Konvertiere in Cents um Floating-Point-Fehler zu vermeiden
+    let remainingCents = Math.round(amount * 100);
 
     for (const denom of denominations) {
-      const count = Math.floor(remaining / denom.value);
+      const denomCents = Math.round(denom.value * 100);
+      const count = Math.floor(remainingCents / denomCents);
       if (count > 0) {
         result.push({ count, label: denom.label });
-        remaining = Math.round((remaining - count * denom.value) * 100) / 100;
+        remainingCents = remainingCents - (count * denomCents);
       }
     }
 

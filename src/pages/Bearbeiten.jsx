@@ -58,11 +58,12 @@ export default function Bearbeiten() {
   const openDialog = (product = null) => {
     if (product) {
       setEditingProduct(product);
-      const isKgMode = product.unit_grams === 1000;
+      // Prüfe ob unit_grams ein Vielfaches von 1000 ist (also volle kg)
+      const isKgMode = product.unit_grams >= 1000 && product.unit_grams % 1000 === 0;
       setFormData({
         name: product.name || '',
         price_per_unit: product.price_per_unit || '',
-        unit_grams: product.unit_grams || '1000',
+        unit_grams: isKgMode ? (product.unit_grams / 1000).toString() : (product.unit_grams || '1000').toString(),
         purchase_price_per_kg: product.purchase_price_per_kg || '',
         image_url: product.image_url || '',
         active: product.active !== false
@@ -112,8 +113,10 @@ export default function Bearbeiten() {
     
     // Wenn Preis pro kg eingegeben wurde, in Preis pro unitGrams umrechnen
     if (priceMode === 'kg') {
-      unitGrams = unitGrams * 1000; // z.B. 1 -> 1000g
-      pricePerUnit = (pricePerUnit / 1000) * unitGrams;
+      // unitGrams ist hier die Anzahl der kg (z.B. 1, 2, etc.)
+      const kgAmount = unitGrams; // Speichere die kg-Menge
+      unitGrams = kgAmount * 1000; // Umrechnung in Gramm: 1 kg = 1000g, 2 kg = 2000g
+      pricePerUnit = pricePerUnit; // Der Preis bleibt wie eingegeben (Preis für die kg-Menge)
     }
     
     const data = {
