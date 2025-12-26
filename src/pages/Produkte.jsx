@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { offlineClient } from '@/api/offlineClient';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
@@ -17,11 +17,11 @@ export default function Produkte() {
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list('-created_date', 100)
+    queryFn: () => offlineClient.entities.Product.list('-created_date', 100)
   });
 
   const createSaleMutation = useMutation({
-    mutationFn: (saleData) => base44.entities.Sale.create(saleData),
+    mutationFn: (saleData) => offlineClient.entities.Sale.create(saleData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       toast.success('Verkauf erfolgreich erfasst!');

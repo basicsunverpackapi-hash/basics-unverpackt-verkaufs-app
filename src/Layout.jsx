@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { Package, ShoppingCart, BarChart3, ClipboardList, Settings, CheckCircle, RefreshCw } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { offlineClient } from '@/api/offlineClient';
+import { offlineSync } from '@/utils/offlineSync';
+import { isOnline } from '@/utils/offlineStorage';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
@@ -10,11 +12,26 @@ import { Badge } from '@/components/ui/badge';
 export default function Layout({ children, currentPageName }) {
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(null);
+  const [online, setOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
 
   const { data: shoppingList = [] } = useQuery({
     queryKey: ['shoppingList'],
-    queryFn: () => base44.entities.ShoppingList.list()
+    queryFn: () => offlineClient.entities.ShoppingList.list()
   });
+
+  // Online/Offline Status überwachen
+  useEffect(() => {
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const menuItems = [
     { name: 'Produkte', icon: Package, path: 'Produkte' },
@@ -25,12 +42,20 @@ export default function Layout({ children, currentPageName }) {
   ];
 
   const handleSync = async () => {
+    if (!isOnline()) {
+      toast.error('Keine Internetverbindung verfügbar');
+      return;
+    }
+    
     setSyncing(true);
     try {
-      // Simuliere Sync
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await offlineSync.sync();
       setLastSync(new Date());
-      toast.success('Daten erfolgreich synchronisiert');
+      if (result.success) {
+        toast.success(result.message || 'Daten erfolgreich synchronisiert');
+      } else {
+        toast.error(result.message || 'Synchronisation fehlgeschlagen');
+      }
     } catch (error) {
       toast.error('Synchronisation fehlgeschlagen');
     } finally {
@@ -54,28 +79,36 @@ export default function Layout({ children, currentPageName }) {
               </div>
             </div>
             
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 disabled:opacity-50 shadow-md hover:shadow-lg"
-            >
-              {syncing ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  <span className="hidden sm:inline font-medium">Synchronisiere...</span>
-                </>
-              ) : lastSync ? (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  <span className="hidden sm:inline font-medium">Synchronisiert</span>
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4" />
-                  <span className="hidden sm:inline font-medium">Sync</span>
-                </>
+            <div className="flex items-center gap-2">
+              {!online && (
+                <div className="flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <span className="hidden sm:inline">Offline</span>
+                </div>
               )}
-            </button>
+              <button
+                onClick={handleSync}
+                disabled={syncing || !online}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 disabled:opacity-50 shadow-md hover:shadow-lg"
+              >
+                {syncing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span className="hidden sm:inline font-medium">Sync...</span>
+                  </>
+                ) : lastSync ? (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="hidden sm:inline font-medium">Sync</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4" />
+                    <span className="hidden sm:inline font-medium">Sync</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </header>

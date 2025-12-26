@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { offlineClient } from '@/api/offlineClient';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,11 +15,11 @@ export default function Verkäufe() {
 
   const { data: sales = [], isLoading } = useQuery({
     queryKey: ['sales'],
-    queryFn: () => base44.entities.Sale.list('-date', 100)
+    queryFn: () => offlineClient.entities.Sale.list('-date', 100)
   });
 
   const deleteSaleMutation = useMutation({
-    mutationFn: (id) => base44.entities.Sale.delete(id),
+    mutationFn: (id) => offlineClient.entities.Sale.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       toast.success('Verkauf storniert');

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { offlineClient } from '@/api/offlineClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -12,12 +12,12 @@ export default function Analyse() {
   const [timeFilter, setTimeFilter] = useState('7days'); // 'today', '7days', 'year'
   const { data: sales = [] } = useQuery({
     queryKey: ['sales'],
-    queryFn: () => base44.entities.Sale.list('-date', 1000)
+    queryFn: () => offlineClient.entities.Sale.list('-date', 1000)
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list()
+    queryFn: () => offlineClient.entities.Product.list()
   });
 
   // Einnahmen berechnen (Verkaufspreis - Einkaufspreis)

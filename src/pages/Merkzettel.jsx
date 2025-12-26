@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { offlineClient } from '@/api/offlineClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,21 +27,21 @@ export default function Merkzettel() {
 
   const { data: shoppingList = [] } = useQuery({
     queryKey: ['shoppingList'],
-    queryFn: () => base44.entities.ShoppingList.list('-created_date', 100)
+    queryFn: () => offlineClient.entities.ShoppingList.list('-created_date', 100)
   });
 
   const { data: debts = [] } = useQuery({
     queryKey: ['debts'],
-    queryFn: () => base44.entities.Debt.list('-created_date', 100)
+    queryFn: () => offlineClient.entities.Debt.list('-created_date', 100)
   });
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
-    queryFn: () => base44.entities.Product.list('-name', 100)
+    queryFn: () => offlineClient.entities.Product.list('-name', 100)
   });
 
   const addReorderMutation = useMutation({
-    mutationFn: (data) => base44.entities.ShoppingList.create(data),
+    mutationFn: (data) => offlineClient.entities.ShoppingList.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shoppingList'] });
       toast.success('Produkt zum Merkzettel hinzugefügt');
@@ -52,7 +52,7 @@ export default function Merkzettel() {
   });
 
   const deleteReorderMutation = useMutation({
-    mutationFn: (id) => base44.entities.ShoppingList.delete(id),
+    mutationFn: (id) => offlineClient.entities.ShoppingList.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shoppingList'] });
       toast.success('Produkt entfernt');
@@ -60,7 +60,7 @@ export default function Merkzettel() {
   });
 
   const addDebtMutation = useMutation({
-    mutationFn: (data) => base44.entities.Debt.create(data),
+    mutationFn: (data) => offlineClient.entities.Debt.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['debts'] });
       toast.success('Schuld eingetragen');
@@ -71,7 +71,7 @@ export default function Merkzettel() {
   });
 
   const updateDebtMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Debt.update(id, data),
+    mutationFn: ({ id, data }) => offlineClient.entities.Debt.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['debts'] });
       toast.success('Schuld aktualisiert');
@@ -79,7 +79,7 @@ export default function Merkzettel() {
   });
 
   const deleteDebtMutation = useMutation({
-    mutationFn: (id) => base44.entities.Debt.delete(id),
+    mutationFn: (id) => offlineClient.entities.Debt.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['debts'] });
       toast.success('Schuld gelöscht');
