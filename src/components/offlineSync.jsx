@@ -1,5 +1,5 @@
 import { base44 } from '@/api/base44Client';
-import { offlineStorage, isOnline } from './offlineStorage';
+import { offlineStorage, isOnline } from './offlineStorage.js';
 
 class OfflineSync {
   constructor() {
