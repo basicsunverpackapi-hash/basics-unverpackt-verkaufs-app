@@ -82,8 +82,10 @@ export const offlineStorage = {
       updated_date: new Date().toISOString(),
       _isLocal: true
     };
-    items.push(newItem);
+    items.unshift(newItem); // Am Anfang einfügen für neueste zuerst
     this.saveLocal(entityName, items);
+    console.log(`Lokales Item erstellt für ${entityName}:`, newItem);
+    console.log(`Gesamtanzahl ${entityName}:`, items.length);
     return newItem;
   },
 

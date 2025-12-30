@@ -64,35 +64,36 @@ entityNames.forEach(entityName => {
 
     // Erstellen
     async create(data) {
+      let newItem;
+      
       if (isOnline()) {
         try {
-          const result = await base44.entities[entityName].create(data);
+          newItem = await base44.entities[entityName].create(data);
           // Lokale Daten aktualisieren
           const localData = offlineStorage.getLocal(entityName);
-          localData.push(result);
+          localData.unshift(newItem); // Am Anfang einfügen für neueste zuerst
           offlineStorage.saveLocal(entityName, localData);
-          return result;
         } catch (error) {
           console.warn(`Online-Erstellung fehlgeschlagen für ${entityName}, speichere lokal`, error);
           // Fallback auf lokale Erstellung
-          const newItem = offlineStorage.createLocalItem(entityName, data);
+          newItem = offlineStorage.createLocalItem(entityName, data);
           offlineStorage.addToSyncQueue({
             type: 'create',
             entityName,
-            data: { ...data, id: newItem.id }
+            data
           });
-          return newItem;
         }
       } else {
         // Offline: Lokal erstellen und zur Sync-Queue hinzufügen
-        const newItem = offlineStorage.createLocalItem(entityName, data);
+        newItem = offlineStorage.createLocalItem(entityName, data);
         offlineStorage.addToSyncQueue({
           type: 'create',
           entityName,
-          data: { ...data, id: newItem.id }
+          data
         });
-        return newItem;
       }
+      
+      return newItem;
     },
 
     // Aktualisieren
