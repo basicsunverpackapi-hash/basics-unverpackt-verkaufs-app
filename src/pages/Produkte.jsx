@@ -21,14 +21,14 @@ export default function Produkte() {
   });
 
   const createSaleMutation = useMutation({
-    mutationFn: (saleData) => offlineClient.entities.Sale.create(saleData),
-    onSuccess: (newSale) => {
-      // Query invalidieren und gleichzeitig Cache aktualisieren
-      queryClient.invalidateQueries({ queryKey: ['sales'] });
-      queryClient.setQueryData(['sales'], (oldData) => {
-        if (!oldData) return [newSale];
-        return [newSale, ...oldData];
-      });
+    mutationFn: async (saleData) => {
+      const newSale = await offlineClient.entities.Sale.create(saleData);
+      // Sofort den Cache mit den aktuellen lokalen Daten aktualisieren
+      const updatedSales = await offlineClient.entities.Sale.list('-date', 100);
+      queryClient.setQueryData(['sales'], updatedSales);
+      return newSale;
+    },
+    onSuccess: () => {
       toast.success('Verkauf erfolgreich erfasst!');
     }
   });

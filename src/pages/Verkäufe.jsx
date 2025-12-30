@@ -21,14 +21,13 @@ export default function Verkäufe() {
   });
 
   const deleteSaleMutation = useMutation({
-    mutationFn: (id) => offlineClient.entities.Sale.delete(id),
-    onSuccess: (_, deletedId) => {
-      // Query invalidieren und gleichzeitig Cache aktualisieren
-      queryClient.setQueryData(['sales'], (oldData) => {
-        if (!oldData) return [];
-        return oldData.filter(sale => sale.id !== deletedId);
-      });
-      queryClient.invalidateQueries({ queryKey: ['sales'] });
+    mutationFn: async (id) => {
+      await offlineClient.entities.Sale.delete(id);
+      // Sofort den Cache mit den aktuellen lokalen Daten aktualisieren
+      const updatedSales = await offlineClient.entities.Sale.list('-date', 100);
+      queryClient.setQueryData(['sales'], updatedSales);
+    },
+    onSuccess: () => {
       toast.success('Verkauf storniert');
     }
   });
