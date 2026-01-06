@@ -22,10 +22,18 @@ export default function Produkte() {
 
   const createSaleMutation = useMutation({
     mutationFn: async (saleData) => {
+      console.log('Erstelle Verkauf offline:', saleData);
       const newSale = await offlineClient.entities.Sale.create(saleData);
+      console.log('Verkauf erstellt:', newSale);
+      
       // Sofort den Cache mit den aktuellen lokalen Daten aktualisieren
       const updatedSales = await offlineClient.entities.Sale.list('-date', 100);
+      console.log('Aktualisierte Sales-Liste:', updatedSales);
       queryClient.setQueryData(['sales'], updatedSales);
+      
+      // Queries neu laden erzwingen
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      
       return newSale;
     },
     onSuccess: () => {

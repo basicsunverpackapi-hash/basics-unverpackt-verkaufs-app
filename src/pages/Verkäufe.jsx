@@ -17,7 +17,9 @@ export default function Verkäufe() {
     queryKey: ['sales'],
     queryFn: () => offlineClient.entities.Sale.list('-date', 100),
     staleTime: 0,
-    refetchOnMount: 'always'
+    cacheTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true
   });
 
   const deleteSaleMutation = useMutation({
