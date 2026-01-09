@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Package, ShoppingCart, BarChart3, ClipboardList, Settings, CheckCircle, RefreshCw, LogOut, User as UserIcon } from 'lucide-react';
+import { Package, ShoppingCart, BarChart3, ClipboardList, Settings, CheckCircle, RefreshCw, LogOut, User as UserIcon, Wallet } from 'lucide-react';
 import { offlineClient } from '@/components/offlineClient';
 import { offlineSync } from '@/components/offlineSync';
 import { isOnline } from '@/components/offlineStorage';
@@ -84,6 +84,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Verkäufe', icon: ShoppingCart, path: 'Verkäufe' },
     { name: 'Analyse', icon: BarChart3, path: 'Analyse' },
     { name: 'Merkzettel', icon: ClipboardList, path: 'Merkzettel', badge: shoppingList.length },
+    ...(currentSeller?.is_admin ? [{ name: 'Kasse', icon: Wallet, path: 'Kasse' }] : []),
     { name: 'Bearbeiten', icon: Settings, path: 'Bearbeiten' }
   ];
 

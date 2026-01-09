@@ -51,12 +51,14 @@ export default function Produkte() {
     setDialogOpen(true);
   };
 
-  const handleSaleComplete = async (saleItem) => {
+  const handleSaleComplete = async (saleItem, paymentMethod) => {
+    const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || '{}');
     const saleData = {
       date: new Date().toISOString(),
       items: [saleItem],
       total_amount: saleItem.total_price,
-      payment_method: 'Bargeld'
+      payment_method: paymentMethod,
+      seller_name: currentSeller.name || 'Unbekannt'
     };
     createSaleMutation.mutate(saleData);
   };

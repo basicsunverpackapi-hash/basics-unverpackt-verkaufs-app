@@ -4,7 +4,7 @@ import { offlineClient } from '@/components/offlineClient';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Calendar, Package, XCircle } from 'lucide-react';
+import { ShoppingCart, Calendar, Package, XCircle, User } from 'lucide-react';
 import { format, isToday, isYesterday, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -113,11 +113,19 @@ export default function Verkäufe() {
                                       {format(new Date(sale.date), 'HH:mm', { locale: de })} Uhr
                                     </span>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline">{sale.payment_method}</Badge>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <Badge variant="outline" className={sale.payment_method === 'Karte' ? 'bg-blue-50 text-blue-700 border-blue-300' : ''}>
+                                      {sale.payment_method === 'Karte' ? '💳 Karte' : '💵 Bar'}
+                                    </Badge>
                                     <span className="text-sm text-gray-500">
                                       {sale.items?.length || 0} Artikel
                                     </span>
+                                    {sale.seller_name && (
+                                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                                        <User className="w-3 h-3" />
+                                        <span>{sale.seller_name}</span>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
