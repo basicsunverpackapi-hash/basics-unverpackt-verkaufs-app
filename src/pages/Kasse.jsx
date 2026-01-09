@@ -12,7 +12,10 @@ import { de } from 'date-fns/locale';
 
 export default function Kasse() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [emptyDialogOpen, setEmptyDialogOpen] = useState(false);
+  const [correctionDialogOpen, setCorrectionDialogOpen] = useState(false);
   const [initialAmount, setInitialAmount] = useState('');
+  const [correctionAmount, setCorrectionAmount] = useState('');
   const [note, setNote] = useState('');
   const queryClient = useQueryClient();
 
@@ -32,7 +35,10 @@ export default function Kasse() {
       queryClient.invalidateQueries({ queryKey: ['cashRegister'] });
       toast.success('Kasseneintrag hinzugefügt');
       setDialogOpen(false);
+      setEmptyDialogOpen(false);
+      setCorrectionDialogOpen(false);
       setInitialAmount('');
+      setCorrectionAmount('');
       setNote('');
     }
   });
@@ -50,30 +56,54 @@ export default function Kasse() {
     });
   };
 
+  const handleEmptyCash = (e) => {
+    e.preventDefault();
+    const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || '{}');
+    
+    addCashMutation.mutate({
+      seller_name: currentSeller.name || 'Unbekannt',
+      amount: -totalCash,
+      type: 'empty',
+      date: new Date().toISOString(),
+      note: note || 'Kasse entleert'
+    });
+  };
+
+  const handleCorrection = (e) => {
+    e.preventDefault();
+    const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || '{}');
+    const correctionValue = parseFloat(correctionAmount) - totalCash;
+    
+    addCashMutation.mutate({
+      seller_name: currentSeller.name || 'Unbekannt',
+      amount: correctionValue,
+      type: 'correction',
+      date: new Date().toISOString(),
+      note: note || `Korrektur auf ${parseFloat(correctionAmount).toFixed(2)} €`
+    });
+  };
+
   // Berechne Kassensummen
   const cashSales = sales.filter(sale => sale.payment_method === 'Bargeld');
   
-  const totalInitial = cashEntries
-    .filter(entry => entry.type === 'initial')
-    .reduce((sum, entry) => sum + (entry.amount || 0), 0);
-  
+  const totalFromEntries = cashEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
   const totalFromSales = cashSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
   
-  const totalCash = totalInitial + totalFromSales;
+  const totalCash = totalFromEntries + totalFromSales;
 
   // Gruppiere nach Verkäufer
   const sellerStats = {};
   
-  cashEntries.filter(entry => entry.type === 'initial').forEach(entry => {
+  cashEntries.forEach(entry => {
     if (!sellerStats[entry.seller_name]) {
-      sellerStats[entry.seller_name] = { initial: 0, sales: 0 };
+      sellerStats[entry.seller_name] = { entries: 0, sales: 0 };
     }
-    sellerStats[entry.seller_name].initial += entry.amount || 0;
+    sellerStats[entry.seller_name].entries += entry.amount || 0;
   });
 
   cashSales.forEach(sale => {
     if (!sellerStats[sale.seller_name]) {
-      sellerStats[sale.seller_name] = { initial: 0, sales: 0 };
+      sellerStats[sale.seller_name] = { entries: 0, sales: 0 };
     }
     sellerStats[sale.seller_name].sales += sale.total_amount || 0;
   });
@@ -90,13 +120,27 @@ export default function Kasse() {
             <h2 className="text-3xl font-bold">Kasse</h2>
             <p className="text-green-100 mt-2">Kassenstand und Übersicht</p>
           </div>
-          <Button 
-            onClick={() => setDialogOpen(true)}
-            className="bg-white text-green-700 hover:bg-green-50 font-bold shadow-lg rounded-xl px-6 py-3"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Kassenbestand erfassen
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => setDialogOpen(true)}
+              className="bg-white text-green-700 hover:bg-green-50 font-bold shadow-lg rounded-xl px-4 py-3"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Bestand erfassen
+            </Button>
+            <Button 
+              onClick={() => setCorrectionDialogOpen(true)}
+              className="bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-lg rounded-xl px-4 py-3"
+            >
+              Korrigieren
+            </Button>
+            <Button 
+              onClick={() => setEmptyDialogOpen(true)}
+              className="bg-red-600 text-white hover:bg-red-700 font-bold shadow-lg rounded-xl px-4 py-3"
+            >
+              Entleeren
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -137,8 +181,8 @@ export default function Kasse() {
                 <Wallet className="w-6 h-6 text-white" />
               </div>
               <div>
-                <p className="text-sm text-purple-700 font-medium">Anfangsbestand</p>
-                <p className="text-3xl font-bold text-purple-900">{totalInitial.toFixed(2)} €</p>
+                <p className="text-sm text-purple-700 font-medium">Einträge gesamt</p>
+                <p className="text-3xl font-bold text-purple-900">{totalFromEntries.toFixed(2)} €</p>
               </div>
             </div>
           </CardContent>
@@ -159,13 +203,13 @@ export default function Kasse() {
                   <div>
                     <p className="font-semibold">{seller}</p>
                     <p className="text-sm text-gray-500">
-                      Anfang: {stats.initial.toFixed(2)} € | Verkäufe: {stats.sales.toFixed(2)} €
+                      Einträge: {stats.entries.toFixed(2)} € | Verkäufe: {stats.sales.toFixed(2)} €
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-green-600">
-                    {(stats.initial + stats.sales).toFixed(2)} €
+                    {(stats.entries + stats.sales).toFixed(2)} €
                   </p>
                   <p className="text-xs text-gray-500">Gesamt</p>
                 </div>
@@ -253,6 +297,126 @@ export default function Kasse() {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog für Kasse entleeren */}
+      <Dialog open={emptyDialogOpen} onOpenChange={setEmptyDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Kasse entleeren</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">
+                Aktueller Kassenstand: <span className="font-bold">{totalCash.toFixed(2)} €</span>
+              </p>
+              <p className="text-sm text-red-600 mt-2">
+                Diese Aktion zieht den gesamten Kassenstand ab und setzt ihn auf 0 €.
+              </p>
+            </div>
+
+            <form onSubmit={handleEmptyCash} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Notiz (optional)</label>
+                <Input
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="z.B. Einzahlung zur Bank"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setEmptyDialogOpen(false);
+                    setNote('');
+                  }} 
+                  className="flex-1"
+                >
+                  Abbrechen
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                >
+                  Kasse entleeren
+                </Button>
+              </div>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog für Korrektur */}
+      <Dialog open={correctionDialogOpen} onOpenChange={setCorrectionDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Kassenstand korrigieren</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                Aktueller Kassenstand: <span className="font-bold">{totalCash.toFixed(2)} €</span>
+              </p>
+            </div>
+
+            <form onSubmit={handleCorrection} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Neuer Kassenstand (€) *</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={correctionAmount}
+                  onChange={(e) => setCorrectionAmount(e.target.value)}
+                  placeholder="0.00"
+                  required
+                  autoFocus
+                />
+                {correctionAmount && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Differenz: <span className={parseFloat(correctionAmount) - totalCash >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      {(parseFloat(correctionAmount) - totalCash).toFixed(2)} €
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Notiz (optional)</label>
+                <Input
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Grund der Korrektur"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => {
+                    setCorrectionDialogOpen(false);
+                    setCorrectionAmount('');
+                    setNote('');
+                  }} 
+                  className="flex-1"
+                >
+                  Abbrechen
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  Korrigieren
+                </Button>
+              </div>
+            </form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
