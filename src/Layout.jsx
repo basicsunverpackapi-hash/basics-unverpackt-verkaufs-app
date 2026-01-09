@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { Package, ShoppingCart, BarChart3, ClipboardList, Settings, CheckCircle, RefreshCw } from 'lucide-react';
+import { Package, ShoppingCart, BarChart3, ClipboardList, Settings, CheckCircle, RefreshCw, LogOut, User as UserIcon } from 'lucide-react';
 import { offlineClient } from '@/components/offlineClient';
 import { offlineSync } from '@/components/offlineSync';
 import { isOnline } from '@/components/offlineStorage';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default function Layout({ children, currentPageName }) {
   const [syncing, setSyncing] = useState(false);
@@ -15,11 +16,23 @@ export default function Layout({ children, currentPageName }) {
   const [online, setOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
   const [pendingCount, setPendingCount] = useState(0);
   const [syncError, setSyncError] = useState(false);
+  const [currentSeller, setCurrentSeller] = useState(null);
+  const navigate = useNavigate();
 
   const { data: shoppingList = [] } = useQuery({
     queryKey: ['shoppingList'],
     queryFn: () => offlineClient.entities.ShoppingList.list()
   });
+
+  // Check if user is logged in
+  useEffect(() => {
+    const seller = localStorage.getItem('currentSeller');
+    if (!seller && currentPageName !== 'Login') {
+      navigate(createPageUrl('Login'));
+    } else if (seller) {
+      setCurrentSeller(JSON.parse(seller));
+    }
+  }, [currentPageName, navigate]);
 
   // Ausstehende Operationen überwachen
   useEffect(() => {
@@ -60,6 +73,12 @@ export default function Layout({ children, currentPageName }) {
     };
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem('currentSeller');
+    setCurrentSeller(null);
+    navigate(createPageUrl('Login'));
+  };
+
   const menuItems = [
     { name: 'Produkte', icon: Package, path: 'Produkte' },
     { name: 'Verkäufe', icon: ShoppingCart, path: 'Verkäufe' },
@@ -67,6 +86,11 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Merkzettel', icon: ClipboardList, path: 'Merkzettel', badge: shoppingList.length },
     { name: 'Bearbeiten', icon: Settings, path: 'Bearbeiten' }
   ];
+
+  // Don't show layout on login page
+  if (currentPageName === 'Login' || !currentSeller) {
+    return children;
+  }
 
   const handleSync = async (isAutoSync = false) => {
     if (!isOnline()) {
@@ -118,6 +142,12 @@ export default function Layout({ children, currentPageName }) {
             </div>
             
             <div className="flex items-center gap-2">
+              {/* Current User */}
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg text-sm">
+                <UserIcon className="w-4 h-4 text-gray-600" />
+                <span className="font-medium text-gray-700">{currentSeller?.name}</span>
+              </div>
+
               {/* Status-Anzeigen */}
               {!online ? (
                 <div className="flex items-center gap-1 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-sm font-medium">
@@ -164,6 +194,16 @@ export default function Layout({ children, currentPageName }) {
                   </>
                 )}
               </button>
+
+              {/* Logout Button */}
+              <Button
+                onClick={handleLogout}
+                variant="outline"
+                size="icon"
+                className="hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>
