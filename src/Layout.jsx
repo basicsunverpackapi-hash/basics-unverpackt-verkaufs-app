@@ -144,9 +144,10 @@ export default function Layout({ children, currentPageName }) {
             
             <div className="flex items-center gap-2">
               {/* Current User */}
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg text-sm">
-                <UserIcon className="w-4 h-4 text-gray-600" />
-                <span className="font-medium text-gray-700">{currentSeller?.name}</span>
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-green-100 rounded-lg text-sm border border-green-300">
+                <UserIcon className="w-4 h-4 text-green-700" />
+                <span className="text-green-600 font-medium mr-1">Verkäufer:</span>
+                <span className="font-bold text-green-800">{currentSeller?.name}</span>
               </div>
 
               {/* Status-Anzeigen */}

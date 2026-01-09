@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { offlineClient } from '@/components/offlineClient';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +12,14 @@ import { toast } from 'sonner';
 
 export default function Verkäufe() {
   const queryClient = useQueryClient();
+  const [currentSeller, setCurrentSeller] = useState(null);
+
+  useEffect(() => {
+    const seller = localStorage.getItem('currentSeller');
+    if (seller) {
+      setCurrentSeller(JSON.parse(seller));
+    }
+  }, []);
 
   const { data: sales = [], isLoading } = useQuery({
     queryKey: ['sales'],
@@ -134,16 +142,18 @@ export default function Verkäufe() {
                                   <div className="text-2xl font-bold text-green-600">
                                     {sale.total_amount?.toFixed(2)} €
                                   </div>
-                                </div>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  onClick={() => handleCancel(sale)}
-                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <XCircle className="w-4 h-4" />
-                                </Button>
-                              </div>
+                                  </div>
+                                  {currentSeller?.is_admin && (
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => handleCancel(sale)}
+                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </Button>
+                                  )}
+                                  </div>
                             </div>
 
                             {/* Items */}
