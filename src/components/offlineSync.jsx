@@ -98,7 +98,17 @@ class OfflineSync {
 
     switch (type) {
       case 'create':
-        const created = await base44.entities[entityName].create(data);
+        // Entferne temporäre lokale ID und _isLocal Flag vor dem Senden
+        const cleanData = { ...data };
+        if (cleanData.id && cleanData.id.startsWith('local_')) {
+          delete cleanData.id;
+        }
+        delete cleanData._isLocal;
+        delete cleanData.created_date;
+        delete cleanData.updated_date;
+        
+        const created = await base44.entities[entityName].create(cleanData);
+        
         // Lokales Temp-Item durch Server-Item ersetzen
         if (data.id && data.id.startsWith('local_')) {
           offlineStorage.deleteLocalItem(entityName, data.id);
@@ -107,14 +117,20 @@ class OfflineSync {
 
       case 'update':
         // Nur updaten, wenn es keine lokale ID ist
-        if (!id.startsWith('local_')) {
-          return await base44.entities[entityName].update(id, data);
+        if (id && !id.startsWith('local_')) {
+          const cleanData = { ...data };
+          delete cleanData.id;
+          delete cleanData._isLocal;
+          delete cleanData.created_date;
+          delete cleanData.updated_date;
+          delete cleanData.created_by;
+          return await base44.entities[entityName].update(id, cleanData);
         }
         break;
 
       case 'delete':
         // Nur löschen, wenn es keine lokale ID ist
-        if (!id.startsWith('local_')) {
+        if (id && !id.startsWith('local_')) {
           return await base44.entities[entityName].delete(id);
         }
         break;
@@ -127,7 +143,7 @@ class OfflineSync {
   // Alle Daten vom Server laden und lokal speichern
   async downloadAllData() {
     try {
-      const entities = ['Product', 'Sale', 'ShoppingList', 'Debt'];
+      const entities = ['Product', 'Sale', 'ShoppingList', 'Debt', 'Seller', 'CashRegister'];
       
       for (const entityName of entities) {
         try {

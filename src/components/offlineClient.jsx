@@ -65,13 +65,19 @@ entityNames.forEach(entityName => {
     // Erstellen
     async create(data) {
       let newItem;
-      
+
       if (isOnline()) {
         try {
           newItem = await base44.entities[entityName].create(data);
           // Lokale Daten aktualisieren
           const localData = offlineStorage.getLocal(entityName);
-          localData.unshift(newItem); // Am Anfang einfügen für neueste zuerst
+          // Prüfe ob Item bereits existiert (verhindere Duplikate)
+          const existingIndex = localData.findIndex(item => item.id === newItem.id);
+          if (existingIndex === -1) {
+            localData.unshift(newItem); // Am Anfang einfügen für neueste zuerst
+          } else {
+            localData[existingIndex] = newItem; // Aktualisiere existierendes Item
+          }
           offlineStorage.saveLocal(entityName, localData);
         } catch (error) {
           console.warn(`Online-Erstellung fehlgeschlagen für ${entityName}, speichere lokal`, error);
@@ -80,7 +86,7 @@ entityNames.forEach(entityName => {
           offlineStorage.addToSyncQueue({
             type: 'create',
             entityName,
-            data
+            data: newItem
           });
         }
       } else {
@@ -89,10 +95,10 @@ entityNames.forEach(entityName => {
         offlineStorage.addToSyncQueue({
           type: 'create',
           entityName,
-          data
+          data: newItem
         });
       }
-      
+
       return newItem;
     },
 

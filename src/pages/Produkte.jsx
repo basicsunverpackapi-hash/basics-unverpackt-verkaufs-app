@@ -52,15 +52,33 @@ export default function Produkte() {
   };
 
   const handleSaleComplete = async (saleItem, paymentMethod) => {
-    const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || '{}');
-    const saleData = {
-      date: new Date().toISOString(),
-      items: [saleItem],
-      total_amount: saleItem.total_price,
-      payment_method: paymentMethod,
-      seller_name: currentSeller.name || 'Unbekannt'
-    };
-    createSaleMutation.mutate(saleData);
+    try {
+      const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || '{}');
+      const saleData = {
+        date: new Date().toISOString(),
+        items: [saleItem],
+        total_amount: saleItem.total_price,
+        payment_method: paymentMethod,
+        seller_name: currentSeller.name || 'Unbekannt'
+      };
+      
+      // Bei Bargeld-Zahlung auch CashRegister-Eintrag erstellen
+      if (paymentMethod === 'Bargeld') {
+        await offlineClient.entities.CashRegister.create({
+          seller_name: currentSeller.name || 'Unbekannt',
+          amount: saleItem.total_price,
+          type: 'sale',
+          date: new Date().toISOString(),
+          note: `Verkauf: ${saleItem.product_name}`
+        });
+        queryClient.invalidateQueries({ queryKey: ['cashRegister'] });
+      }
+      
+      createSaleMutation.mutate(saleData);
+    } catch (error) {
+      console.error('Fehler beim Verkaufsabschluss:', error);
+      toast.error('Fehler beim Speichern des Verkaufs');
+    }
   };
 
   return (

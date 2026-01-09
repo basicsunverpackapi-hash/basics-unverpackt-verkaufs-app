@@ -47,10 +47,15 @@ export default function Auth() {
       // Automatisches Anmelden nach vollständiger PIN-Eingabe
       if (value.length === 4 && selectedSeller) {
         if (value === selectedSeller.pin) {
-          localStorage.setItem('currentSeller', JSON.stringify(selectedSeller));
-          toast.success(`Willkommen, ${selectedSeller.name}!`);
-          navigate(createPageUrl('Produkte'));
-          window.location.reload();
+          try {
+            localStorage.setItem('currentSeller', JSON.stringify(selectedSeller));
+            toast.success(`Willkommen, ${selectedSeller.name}!`);
+            navigate(createPageUrl('Produkte'));
+            window.location.reload();
+          } catch (error) {
+            console.error('Fehler beim Speichern des Verkäufers:', error);
+            toast.error('Fehler beim Anmelden');
+          }
         } else {
           setTimeout(() => {
             toast.error('❌ PIN ist falsch! Bitte erneut versuchen.');

@@ -48,7 +48,7 @@ export const offlineStorage = {
   addToSyncQueue(operation) {
     try {
       const queue = this.getSyncQueue();
-      operation.id = Date.now() + Math.random();
+      operation.queueId = Date.now() + Math.random();
       operation.timestamp = new Date().toISOString();
       queue.push(operation);
       localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));

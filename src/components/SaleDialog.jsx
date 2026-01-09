@@ -65,7 +65,7 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
   const changeBreakdown = change > 0 ? calculateChange(change) : [];
 
   const handleComplete = () => {
-    if (weightKg > 0) {
+    if (weightKg > 0 && totalPrice > 0) {
       onComplete({
         product_id: product.id,
         product_name: product.name,

@@ -30,7 +30,13 @@ export default function Layout({ children, currentPageName }) {
     if (!seller && currentPageName !== 'Auth') {
       navigate(createPageUrl('Auth'));
     } else if (seller) {
-      setCurrentSeller(JSON.parse(seller));
+      try {
+        setCurrentSeller(JSON.parse(seller));
+      } catch (error) {
+        console.error('Fehler beim Parsen des Verkäufers:', error);
+        localStorage.removeItem('currentSeller');
+        navigate(createPageUrl('Auth'));
+      }
     }
   }, [currentPageName, navigate]);
 
