@@ -27,8 +27,8 @@ export default function Layout({ children, currentPageName }) {
   // Check if user is logged in
   useEffect(() => {
     const seller = localStorage.getItem('currentSeller');
-    if (!seller && currentPageName !== 'Login') {
-      navigate(createPageUrl('Login'));
+    if (!seller && currentPageName !== 'Auth') {
+      navigate(createPageUrl('Auth'));
     } else if (seller) {
       setCurrentSeller(JSON.parse(seller));
     }
@@ -76,7 +76,7 @@ export default function Layout({ children, currentPageName }) {
   const handleLogout = () => {
     localStorage.removeItem('currentSeller');
     setCurrentSeller(null);
-    navigate(createPageUrl('Login'));
+    navigate(createPageUrl('Auth'));
   };
 
   const menuItems = [
@@ -87,8 +87,8 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Bearbeiten', icon: Settings, path: 'Bearbeiten' }
   ];
 
-  // Don't show layout on login page
-  if (currentPageName === 'Login' || !currentSeller) {
+  // Don't show layout on auth page
+  if (currentPageName === 'Auth' || !currentSeller) {
     return children;
   }
 

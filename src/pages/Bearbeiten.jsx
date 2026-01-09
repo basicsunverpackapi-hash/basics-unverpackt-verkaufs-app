@@ -22,12 +22,29 @@ export default function Bearbeiten() {
   });
   const [priceMode, setPriceMode] = useState('gram'); // 'gram' oder 'kg'
   const [uploading, setUploading] = useState(false);
+  const [sellerDialogOpen, setSellerDialogOpen] = useState(false);
+  const [editingSeller, setEditingSeller] = useState(null);
+  const [sellerFormData, setSellerFormData] = useState({ name: '', pin: '', is_admin: false });
+  const [currentSeller, setCurrentSeller] = useState(null);
 
   const queryClient = useQueryClient();
+
+  // Get current seller
+  React.useEffect(() => {
+    const seller = localStorage.getItem('currentSeller');
+    if (seller) {
+      setCurrentSeller(JSON.parse(seller));
+    }
+  }, []);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
     queryFn: () => offlineClient.entities.Product.list('-created_date', 100)
+  });
+
+  const { data: sellers = [] } = useQuery({
+    queryKey: ['sellers'],
+    queryFn: () => offlineClient.entities.Seller.list('name', 100)
   });
 
   const createProductMutation = useMutation({
@@ -53,6 +70,34 @@ export default function Bearbeiten() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Produkt gelöscht');
+    }
+  });
+
+  const createSellerMutation = useMutation({
+    mutationFn: (data) => offlineClient.entities.Seller.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sellers'] });
+      toast.success('Verkäufer erstellt');
+      setSellerDialogOpen(false);
+      setSellerFormData({ name: '', pin: '', is_admin: false });
+    }
+  });
+
+  const updateSellerMutation = useMutation({
+    mutationFn: ({ id, data }) => offlineClient.entities.Seller.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sellers'] });
+      toast.success('Verkäufer aktualisiert');
+      setSellerDialogOpen(false);
+      setEditingSeller(null);
+    }
+  });
+
+  const deleteSellerMutation = useMutation({
+    mutationFn: (id) => offlineClient.entities.Seller.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sellers'] });
+      toast.success('Verkäufer gelöscht');
     }
   });
 
@@ -134,6 +179,38 @@ export default function Bearbeiten() {
     }
   };
 
+  const handleSellerSubmit = (e) => {
+    e.preventDefault();
+    
+    if (sellerFormData.pin.length !== 4) {
+      toast.error('PIN muss 4-stellig sein');
+      return;
+    }
+
+    if (editingSeller) {
+      updateSellerMutation.mutate({ id: editingSeller.id, data: sellerFormData });
+    } else {
+      createSellerMutation.mutate(sellerFormData);
+    }
+  };
+
+  const openSellerDialog = (seller = null) => {
+    if (seller) {
+      setEditingSeller(seller);
+      setSellerFormData({
+        name: seller.name,
+        pin: seller.pin,
+        is_admin: seller.is_admin || false
+      });
+    } else {
+      setEditingSeller(null);
+      setSellerFormData({ name: '', pin: '', is_admin: false });
+    }
+    setSellerDialogOpen(true);
+  };
+
+  const isAdmin = currentSeller?.is_admin || false;
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center">
@@ -146,6 +223,63 @@ export default function Bearbeiten() {
           Neues Produkt
         </Button>
       </div>
+
+      {/* Seller Management Section - Only for Admins */}
+      {isAdmin && (
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 shadow-lg text-white">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-2xl font-bold">Verkäufer verwalten</h2>
+              <p className="text-blue-100 mt-1">Nur für Administratoren</p>
+            </div>
+            <Button onClick={() => openSellerDialog()} className="bg-white text-blue-700 hover:bg-blue-50 font-bold shadow-lg rounded-xl px-6 py-3">
+              <Plus className="w-5 h-5 mr-2" />
+              Neuer Verkäufer
+            </Button>
+          </div>
+          
+          <div className="grid gap-3 mt-4">
+            {sellers.map((seller) => (
+              <Card key={seller.id} className="bg-white/10 backdrop-blur-sm border-white/20">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <User className="w-5 h-5" />
+                    <div>
+                      <p className="font-semibold">{seller.name}</p>
+                      <p className="text-sm text-blue-100">PIN: {seller.pin}</p>
+                    </div>
+                    {seller.is_admin && (
+                      <span className="px-2 py-1 bg-yellow-400 text-yellow-900 rounded text-xs font-bold">Admin</span>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => openSellerDialog(seller)}
+                      className="bg-white/20 hover:bg-white/30 border-white/40"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        if (confirm('Verkäufer wirklich löschen?')) {
+                          deleteSellerMutation.mutate(seller.id);
+                        }
+                      }}
+                      className="bg-white/20 hover:bg-white/30 border-white/40 text-red-200 hover:text-red-100"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Products List */}
       <div className="grid gap-4">
@@ -347,6 +481,66 @@ export default function Bearbeiten() {
               </Button>
               <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700">
                 {editingProduct ? 'Speichern' : 'Erstellen'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Seller Dialog */}
+      <Dialog open={sellerDialogOpen} onOpenChange={setSellerDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingSeller ? 'Verkäufer bearbeiten' : 'Neuer Verkäufer'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSellerSubmit} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Name *</label>
+              <Input
+                value={sellerFormData.name}
+                onChange={(e) => setSellerFormData({ ...sellerFormData, name: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">PIN (4-stellig) *</label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                value={sellerFormData.pin}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d*$/.test(value)) {
+                    setSellerFormData({ ...sellerFormData, pin: value });
+                  }
+                }}
+                placeholder="0000"
+                required
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="is_admin"
+                checked={sellerFormData.is_admin}
+                onChange={(e) => setSellerFormData({ ...sellerFormData, is_admin: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <label htmlFor="is_admin" className="text-sm font-medium">Administrator-Rechte</label>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button type="button" variant="outline" onClick={() => setSellerDialogOpen(false)} className="flex-1">
+                Abbrechen
+              </Button>
+              <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                {editingSeller ? 'Speichern' : 'Erstellen'}
               </Button>
             </div>
           </form>

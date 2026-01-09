@@ -6,7 +6,7 @@ export const offlineClient = {
   entities: {}
 };
 
-const entityNames = ['Product', 'Sale', 'ShoppingList', 'Debt'];
+const entityNames = ['Product', 'Sale', 'ShoppingList', 'Debt', 'Seller'];
 
 entityNames.forEach(entityName => {
   offlineClient.entities[entityName] = {

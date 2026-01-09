@@ -3,6 +3,7 @@ import Bearbeiten from './pages/Bearbeiten';
 import Merkzettel from './pages/Merkzettel';
 import Produkte from './pages/Produkte';
 import verkUfe from './pages/Verkäufe';
+import Auth from './pages/Auth';
 import __Layout from './Layout.jsx';
 
 
@@ -12,6 +13,7 @@ export const PAGES = {
     "Merkzettel": Merkzettel,
     "Produkte": Produkte,
     "Verkäufe": verkUfe,
+    "Auth": Auth,
 }
 
 export const pagesConfig = {
