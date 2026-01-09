@@ -226,62 +226,107 @@ export default function Bearbeiten() {
 
       {/* Seller Management Section - Only for Admins */}
       {isAdmin && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 shadow-2xl text-white border-4 border-blue-400">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h2 className="text-3xl font-bold flex items-center gap-3">
-                <User className="w-8 h-8" />
-                Verkäufer verwalten
-              </h2>
-              <p className="text-blue-100 mt-2 text-lg">🔒 Nur für Administratoren</p>
-            </div>
-            <Button onClick={() => openSellerDialog()} className="bg-white text-blue-700 hover:bg-blue-50 font-bold shadow-xl rounded-xl px-6 py-3 text-lg">
-              <Plus className="w-5 h-5 mr-2" />
-              Neuer Verkäufer
-            </Button>
-          </div>
+        <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-600 rounded-3xl p-8 shadow-2xl">
+          {/* Decorative Elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/20 rounded-full -ml-24 -mb-24 blur-2xl"></div>
           
-          <div className="grid gap-3 mt-4">
-            {sellers.map((seller) => (
-              <Card key={seller.id} className="bg-white border-2 border-white/30">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900 text-lg">{seller.name}</p>
-                      <p className="text-sm text-gray-600">PIN: {seller.pin}</p>
-                    </div>
-                    {seller.is_admin && (
-                      <span className="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-lg text-xs font-bold">Admin</span>
-                    )}
+          <div className="relative z-10">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <div className="flex items-center gap-4 mb-2">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+                    <User className="w-8 h-8 text-white" />
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => openSellerDialog(seller)}
-                      className="bg-blue-600 hover:bg-blue-700 border-blue-600 text-white"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm('Verkäufer wirklich löschen?')) {
-                          deleteSellerMutation.mutate(seller.id);
-                        }
-                      }}
-                      className="bg-red-500 hover:bg-red-600 border-red-500 text-white"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  <div>
+                    <h2 className="text-3xl font-bold text-white">Verkäufer verwalten</h2>
+                    <p className="text-blue-100 mt-1 flex items-center gap-2">
+                      <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+                      Nur für Administratoren
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              </div>
+              <Button 
+                onClick={() => openSellerDialog()} 
+                className="bg-white text-blue-700 hover:bg-blue-50 font-bold shadow-xl hover:shadow-2xl rounded-2xl px-8 py-6 text-lg transition-all duration-200 hover:scale-105"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                Neuer Verkäufer
+              </Button>
+            </div>
+            
+            <div className="grid gap-4 mt-6">
+              {sellers.map((seller) => (
+                <Card key={seller.id} className="bg-white/95 backdrop-blur-sm border-none shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02]">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-md">
+                            <User className="w-7 h-7 text-white" />
+                          </div>
+                          {seller.is_admin && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white">
+                              <span className="text-xs">⭐</span>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-3">
+                            <p className="font-bold text-gray-900 text-xl">{seller.name}</p>
+                            {seller.is_admin && (
+                              <span className="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900 rounded-full text-xs font-bold shadow-md">
+                                Administrator
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm text-gray-500">PIN:</span>
+                            <span className="font-mono text-sm text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
+                              {seller.pin}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openSellerDialog(seller)}
+                          className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 border-none text-white shadow-md hover:shadow-lg transition-all"
+                        >
+                          <Pencil className="w-5 h-5" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            if (confirm(`${seller.name} wirklich löschen?`)) {
+                              deleteSellerMutation.mutate(seller.id);
+                            }
+                          }}
+                          className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 border-none text-white shadow-md hover:shadow-lg transition-all"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {sellers.length === 0 && (
+                <Card className="bg-white/90 backdrop-blur-sm border-none">
+                  <CardContent className="p-12 text-center">
+                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <User className="w-10 h-10 text-blue-600" />
+                    </div>
+                    <p className="text-gray-600 text-lg">Noch keine Verkäufer vorhanden</p>
+                    <p className="text-gray-400 text-sm mt-2">Erstellen Sie den ersten Verkäufer</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
         </div>
       )}

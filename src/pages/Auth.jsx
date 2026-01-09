@@ -36,7 +36,7 @@ export default function Auth() {
       navigate(createPageUrl('Produkte'));
       window.location.reload();
     } else {
-      toast.error('Falsche PIN');
+      toast.error('❌ PIN ist falsch! Bitte erneut versuchen.');
       setPin('');
     }
   };
@@ -44,8 +44,19 @@ export default function Auth() {
   const handlePinInput = (value) => {
     if (value.length <= 4 && /^\d*$/.test(value)) {
       setPin(value);
-      if (value.length === 4) {
-        setTimeout(() => handleLogin(), 100);
+      // Automatisches Anmelden nach vollständiger PIN-Eingabe
+      if (value.length === 4 && selectedSeller) {
+        if (value === selectedSeller.pin) {
+          localStorage.setItem('currentSeller', JSON.stringify(selectedSeller));
+          toast.success(`Willkommen, ${selectedSeller.name}!`);
+          navigate(createPageUrl('Produkte'));
+          window.location.reload();
+        } else {
+          setTimeout(() => {
+            toast.error('❌ PIN ist falsch! Bitte erneut versuchen.');
+            setPin('');
+          }, 200);
+        }
       }
     }
   };
