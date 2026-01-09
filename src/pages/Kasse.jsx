@@ -144,50 +144,20 @@ export default function Kasse() {
         </div>
       </div>
 
-      {/* Gesamtübersicht */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-blue-700 font-medium">Kassenstand gesamt</p>
-                <p className="text-3xl font-bold text-blue-900">{totalCash.toFixed(2)} €</p>
-              </div>
+      {/* Kassenstand gesamt */}
+      <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-300 border-2 shadow-lg">
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center gap-4">
+            <div className="w-16 h-16 bg-green-500 rounded-xl flex items-center justify-center shadow-md">
+              <Wallet className="w-8 h-8 text-white" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-green-700 font-medium">Barverkäufe</p>
-                <p className="text-3xl font-bold text-green-900">{totalFromSales.toFixed(2)} €</p>
-              </div>
+            <div className="text-center">
+              <p className="text-lg text-green-700 font-semibold mb-1">Kassenstand gesamt</p>
+              <p className="text-5xl font-bold text-green-900">{totalCash.toFixed(2)} €</p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <p className="text-sm text-purple-700 font-medium">Einträge gesamt</p>
-                <p className="text-3xl font-bold text-purple-900">{totalFromEntries.toFixed(2)} €</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Pro Verkäufer */}
       <Card>

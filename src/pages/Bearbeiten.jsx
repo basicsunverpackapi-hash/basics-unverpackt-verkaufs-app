@@ -226,13 +226,16 @@ export default function Bearbeiten() {
 
       {/* Seller Management Section - Only for Admins */}
       {isAdmin && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 shadow-lg text-white">
-          <div className="flex justify-between items-center mb-4">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 shadow-2xl text-white border-4 border-blue-400">
+          <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-2xl font-bold">Verkäufer verwalten</h2>
-              <p className="text-blue-100 mt-1">Nur für Administratoren</p>
+              <h2 className="text-3xl font-bold flex items-center gap-3">
+                <User className="w-8 h-8" />
+                Verkäufer verwalten
+              </h2>
+              <p className="text-blue-100 mt-2 text-lg">🔒 Nur für Administratoren</p>
             </div>
-            <Button onClick={() => openSellerDialog()} className="bg-white text-blue-700 hover:bg-blue-50 font-bold shadow-lg rounded-xl px-6 py-3">
+            <Button onClick={() => openSellerDialog()} className="bg-white text-blue-700 hover:bg-blue-50 font-bold shadow-xl rounded-xl px-6 py-3 text-lg">
               <Plus className="w-5 h-5 mr-2" />
               Neuer Verkäufer
             </Button>
