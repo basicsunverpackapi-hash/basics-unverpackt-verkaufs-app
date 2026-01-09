@@ -6,9 +6,10 @@ import { Card } from '@/components/ui/card';
 import { ArrowRight, Banknote, Coins } from 'lucide-react';
 
 export default function SaleDialog({ product, open, onClose, onComplete }) {
-  const [step, setStep] = useState(1); // 1 = Gewicht/Betrag, 2 = Bezahlung
+  const [step, setStep] = useState(1); // 1 = Gewicht/Betrag, 2 = Zahlungsmethode, 3 = Bezahlung
   const [mode, setMode] = useState('weight'); // 'weight' oder 'money'
   const [inputValue, setInputValue] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Bargeld');
   const [receivedMoney, setReceivedMoney] = useState('');
 
   if (!product) return null;
@@ -71,9 +72,10 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
         weight_kg: weightKg,
         price_per_kg: pricePerKg,
         total_price: totalPrice
-      });
+      }, paymentMethod);
       setInputValue('');
       setReceivedMoney('');
+      setPaymentMethod('Bargeld');
       setStep(1);
       setMode('weight');
       onClose();
@@ -82,13 +84,25 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
 
   const handleNext = () => {
     if (weightKg > 0) {
-      setStep(2);
+      setStep(2); // Gehe zu Zahlungsmethode
+    }
+  };
+
+  const handlePaymentMethodNext = () => {
+    if (paymentMethod === 'Karte') {
+      handleComplete(); // Bei Kartenzahlung direkt abschließen
+    } else {
+      setStep(3); // Bei Bargeld zu Schritt 3 (Rückgeld)
     }
   };
 
   const handleBack = () => {
-    setStep(1);
-    setReceivedMoney('');
+    if (step === 3) {
+      setStep(2);
+      setReceivedMoney('');
+    } else {
+      setStep(1);
+    }
   };
 
   const handlePassend = () => {
@@ -102,6 +116,7 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
         setStep(1);
         setInputValue('');
         setReceivedMoney('');
+        setPaymentMethod('Bargeld');
         onClose();
       }
     }}>
@@ -172,6 +187,53 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
                 className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
               >
                 Weiter <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </div>
+        ) : step === 2 ? (
+          <div className="space-y-4">
+            {/* Price Summary */}
+            <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 shadow-lg rounded-xl">
+              <div className="text-center">
+                <p className="text-sm font-semibold text-gray-600 mb-2">Zu zahlen</p>
+                <p className="text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">{totalPrice.toFixed(2)} €</p>
+                <p className="text-base text-gray-600 mt-2 font-medium">{(weightKg * 1000).toFixed(0)} g</p>
+              </div>
+            </Card>
+
+            {/* Payment Method Selection */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">Zahlungsmethode</label>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  onClick={() => setPaymentMethod('Bargeld')}
+                  variant={paymentMethod === 'Bargeld' ? 'default' : 'outline'}
+                  className={`h-16 text-lg ${paymentMethod === 'Bargeld' ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                >
+                  💵 Bargeld
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setPaymentMethod('Karte')}
+                  variant={paymentMethod === 'Karte' ? 'default' : 'outline'}
+                  className={`h-16 text-lg ${paymentMethod === 'Karte' ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                >
+                  💳 Karte
+                </Button>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" onClick={handleBack} className="flex-1 rounded-xl border-2 hover:bg-gray-100">
+                Zurück
+              </Button>
+              <Button 
+                onClick={handlePaymentMethodNext}
+                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+              >
+                {paymentMethod === 'Karte' ? 'Bezahlen' : 'Weiter'} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
