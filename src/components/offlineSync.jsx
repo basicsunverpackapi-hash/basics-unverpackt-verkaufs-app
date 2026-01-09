@@ -16,6 +16,11 @@ class OfflineSync {
     this.syncCallbacks.forEach(cb => cb(status));
   }
 
+  // Sync-Queue abrufen
+  getSyncQueue() {
+    return offlineStorage.getSyncQueue();
+  }
+
   // Synchronisierung durchführen
   async sync() {
     if (!isOnline() || this.isSyncing) {
@@ -140,16 +145,16 @@ class OfflineSync {
 
 export const offlineSync = new OfflineSync();
 
-// Auto-Sync bei Verbindungswiederherstellung
+// Periodische Prüfung auf ausstehende Operationen (wenn online)
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => {
-    console.log('Internetverbindung wiederhergestellt, starte Sync...');
-    setTimeout(() => {
-      offlineSync.sync();
-    }, 1000);
-  });
-
-  window.addEventListener('offline', () => {
-    console.log('Keine Internetverbindung - Offline-Modus aktiv');
-  });
+  // Prüfe alle 30 Sekunden auf ausstehende Operationen
+  setInterval(() => {
+    if (isOnline() && !offlineSync.isSyncing) {
+      const queue = offlineStorage.getSyncQueue();
+      if (queue.length > 0) {
+        console.log(`${queue.length} ausstehende Operationen gefunden, starte Auto-Sync...`);
+        offlineSync.sync();
+      }
+    }
+  }, 30000);
 }
