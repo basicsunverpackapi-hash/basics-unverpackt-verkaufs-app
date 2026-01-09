@@ -243,16 +243,18 @@ export default function Bearbeiten() {
           
           <div className="grid gap-3 mt-4">
             {sellers.map((seller) => (
-              <Card key={seller.id} className="bg-white/10 backdrop-blur-sm border-white/20">
+              <Card key={seller.id} className="bg-white border-2 border-white/30">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <User className="w-5 h-5" />
+                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
                     <div>
-                      <p className="font-semibold">{seller.name}</p>
-                      <p className="text-sm text-blue-100">PIN: {seller.pin}</p>
+                      <p className="font-bold text-gray-900 text-lg">{seller.name}</p>
+                      <p className="text-sm text-gray-600">PIN: {seller.pin}</p>
                     </div>
                     {seller.is_admin && (
-                      <span className="px-2 py-1 bg-yellow-400 text-yellow-900 rounded text-xs font-bold">Admin</span>
+                      <span className="px-3 py-1 bg-yellow-400 text-yellow-900 rounded-lg text-xs font-bold">Admin</span>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -260,7 +262,7 @@ export default function Bearbeiten() {
                       variant="outline"
                       size="icon"
                       onClick={() => openSellerDialog(seller)}
-                      className="bg-white/20 hover:bg-white/30 border-white/40"
+                      className="bg-blue-600 hover:bg-blue-700 border-blue-600 text-white"
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
@@ -272,7 +274,7 @@ export default function Bearbeiten() {
                           deleteSellerMutation.mutate(seller.id);
                         }
                       }}
-                      className="bg-white/20 hover:bg-white/30 border-white/40 text-red-200 hover:text-red-100"
+                      className="bg-red-500 hover:bg-red-600 border-red-500 text-white"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
