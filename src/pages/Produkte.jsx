@@ -98,37 +98,37 @@ export default function Produkte() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {filteredProducts.map((product) => (
             <Card 
               key={product.id} 
-              className="overflow-hidden hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-green-300 rounded-2xl"
+              className="overflow-hidden hover:shadow-lg hover:scale-102 transition-all duration-200 cursor-pointer border border-gray-200 hover:border-green-400 rounded-xl"
               onClick={() => handleProductClick(product)}
             >
-              <div className="aspect-square bg-gradient-to-br from-green-100 via-emerald-50 to-green-100 relative overflow-hidden">
+              <div className="aspect-[4/3] bg-gradient-to-br from-green-100 via-emerald-50 to-green-100 relative overflow-hidden">
                 {product.image_url ? (
                   <img
                     src={product.image_url}
                     alt={product.name}
-                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-xl">
-                      <span className="text-5xl text-white font-bold">
+                    <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-2xl text-white font-bold">
                         {product.name?.[0]?.toUpperCase()}
                       </span>
                     </div>
                   </div>
                 )}
               </div>
-              <CardContent className="p-5 bg-white">
-                <h3 className="font-bold text-gray-900 mb-2 text-lg">{product.name}</h3>
-                <div className="flex justify-between items-center bg-green-50 rounded-lg p-2 border border-green-200">
-                  <span className="text-xl font-bold text-green-700">
+              <CardContent className="p-3 bg-white">
+                <h3 className="font-semibold text-gray-900 mb-2 text-sm line-clamp-2">{product.name}</h3>
+                <div className="flex justify-between items-center bg-green-50 rounded-lg p-1.5 border border-green-200">
+                  <span className="text-base font-bold text-green-700">
                     {product.price_per_unit?.toFixed(2)} €
                   </span>
-                  <span className="text-sm text-gray-600 font-medium">
+                  <span className="text-xs text-gray-600 font-medium">
                     / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
                   </span>
                 </div>
