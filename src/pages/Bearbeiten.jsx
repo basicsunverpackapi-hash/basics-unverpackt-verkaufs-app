@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Package, Upload } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Upload, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Bearbeiten() {
