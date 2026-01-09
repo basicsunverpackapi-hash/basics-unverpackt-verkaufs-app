@@ -55,7 +55,7 @@ export default function Auth() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-xl">
           <CardTitle className="text-3xl font-bold">Basics Unverpackt</CardTitle>
-          <p className="text-green-50 mt-2">Bitte anmelden</p>
+          <p className="text-green-50 mt-2">Wer verkauft?</p>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
           {!selectedSeller ? (
