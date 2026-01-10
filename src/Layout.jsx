@@ -139,9 +139,11 @@ export default function Layout({ children, currentPageName }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-green-200">
-                <Package className="w-6 h-6 text-white" />
-              </div>
+              <img 
+                src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69497159d48abdc10af18a00/0ae839f41_basics.png" 
+                alt="Basics Unverpackt Logo" 
+                className="w-11 h-11 rounded-xl shadow-lg shadow-green-200 object-cover"
+              />
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">Basics Unverpackt</h1>
                 <p className="text-xs text-gray-500 hidden sm:block">Warenwirtschaft</p>
