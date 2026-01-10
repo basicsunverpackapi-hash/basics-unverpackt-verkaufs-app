@@ -171,8 +171,22 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
             {/* Price Display */}
             <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 shadow-lg rounded-xl">
               <div className="text-center">
-                <p className="text-sm font-semibold text-gray-600 mb-2">Zu zahlen</p>
-                <p className="text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">{totalPrice.toFixed(2)} €</p>
+                {mode === 'weight' ? (
+                  <>
+                    <p className="text-sm font-semibold text-gray-600 mb-2">Zu zahlen</p>
+                    <p className="text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">{totalPrice.toFixed(2)} €</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-gray-600 mb-2">Gewicht</p>
+                    <p className="text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">
+                      {weightKg >= 1 
+                        ? `${weightKg.toFixed(3)} kg` 
+                        : `${(weightKg * 1000).toFixed(0)} g`}
+                    </p>
+                    <p className="text-base text-gray-600 mt-2 font-medium">für {totalPrice.toFixed(2)} €</p>
+                  </>
+                )}
               </div>
             </Card>
 
