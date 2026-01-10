@@ -14,8 +14,8 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
 
   if (!product) return null;
 
-  // Preis pro kg berechnen
-  const pricePerKg = (product.price_per_unit / product.unit_grams) * 1000;
+  // Preis pro kg berechnen (Preis pro Einheit * wie viele Einheiten in 1kg)
+  const pricePerKg = product.price_per_unit * (1000 / product.unit_grams);
   
   // Gewicht in kg berechnen
   const weightKg = mode === 'weight' 
