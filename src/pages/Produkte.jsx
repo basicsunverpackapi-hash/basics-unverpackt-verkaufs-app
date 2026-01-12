@@ -128,14 +128,14 @@ export default function Produkte() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
           {filteredProducts.map((product) => (
             <Card 
               key={product.id} 
               className="group overflow-hidden hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer border-2 border-gray-100 hover:border-green-400 rounded-2xl flex flex-col bg-white"
               onClick={() => handleProductClick(product)}
             >
-              <div className="aspect-square bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 relative overflow-hidden flex items-center justify-center">
+              <div className="aspect-square bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 relative overflow-hidden flex items-center justify-center p-3 sm:p-4 md:p-5">
                 {product.image_url ? (
                   <img
                     src={product.image_url}
@@ -143,22 +143,26 @@ export default function Produkte() {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center p-5">
-                    <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 rounded-3xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300">
-                      <span className="text-xl font-extrabold text-white text-center px-4 leading-tight break-words drop-shadow-lg">
-                        {product.name}
-                      </span>
-                    </div>
+                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-2 sm:p-3">
+                    <span className="text-sm sm:text-base md:text-lg lg:text-xl font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full overflow-hidden" style={{ 
+                      display: '-webkit-box',
+                      WebkitLineClamp: '4',
+                      WebkitBoxOrient: 'vertical',
+                      wordBreak: 'break-word',
+                      hyphens: 'auto'
+                    }}>
+                      {product.name}
+                    </span>
                   </div>
                 )}
               </div>
-              <CardContent className="p-4 bg-white">
+              <CardContent className="p-2 sm:p-3 md:p-4 bg-white">
                 <div className="flex flex-col gap-1">
-                  <div className="flex justify-between items-baseline">
-                    <span className="text-2xl font-extrabold text-green-600">
+                  <div className="flex justify-between items-baseline gap-1">
+                    <span className="text-lg sm:text-xl md:text-2xl font-extrabold text-green-600">
                       {product.price_per_unit?.toFixed(2)}€
                     </span>
-                    <span className="text-base text-gray-500 font-semibold">
+                    <span className="text-xs sm:text-sm md:text-base text-gray-500 font-semibold whitespace-nowrap">
                       {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)}kg` : `${product.unit_grams}g`}
                     </span>
                   </div>
