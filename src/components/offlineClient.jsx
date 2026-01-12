@@ -69,6 +69,7 @@ entityNames.forEach(entityName => {
       if (isOnline()) {
         try {
           newItem = await base44.entities[entityName].create(data);
+          console.log(`${entityName} erfolgreich auf Server erstellt:`, newItem.id);
           // Lokale Daten aktualisieren
           const localData = offlineStorage.getLocal(entityName);
           // Prüfe ob Item bereits existiert (verhindere Duplikate)
@@ -79,8 +80,9 @@ entityNames.forEach(entityName => {
             localData[existingIndex] = newItem; // Aktualisiere existierendes Item
           }
           offlineStorage.saveLocal(entityName, localData);
+          return newItem; // WICHTIG: Gib Server-Item zurück
         } catch (error) {
-          console.warn(`Online-Erstellung fehlgeschlagen für ${entityName}, speichere lokal`, error);
+          console.error(`Online-Erstellung fehlgeschlagen für ${entityName}, speichere lokal`, error);
           // Fallback auf lokale Erstellung
           newItem = offlineStorage.createLocalItem(entityName, data);
           offlineStorage.addToSyncQueue({
@@ -88,6 +90,7 @@ entityNames.forEach(entityName => {
             entityName,
             data: newItem
           });
+          return newItem;
         }
       } else {
         // Offline: Lokal erstellen und zur Sync-Queue hinzufügen
@@ -97,9 +100,8 @@ entityNames.forEach(entityName => {
           entityName,
           data: newItem
         });
+        return newItem;
       }
-
-      return newItem;
     },
 
     // Aktualisieren
@@ -107,11 +109,12 @@ entityNames.forEach(entityName => {
       if (isOnline()) {
         try {
           const result = await base44.entities[entityName].update(id, updates);
+          console.log(`${entityName} erfolgreich auf Server aktualisiert:`, id);
           // Lokale Daten aktualisieren
           offlineStorage.updateLocalItem(entityName, id, updates);
           return result;
         } catch (error) {
-          console.warn(`Online-Update fehlgeschlagen für ${entityName}, speichere lokal`, error);
+          console.error(`Online-Update fehlgeschlagen für ${entityName}, speichere lokal`, error);
           const updated = offlineStorage.updateLocalItem(entityName, id, updates);
           offlineStorage.addToSyncQueue({
             type: 'update',
@@ -139,10 +142,11 @@ entityNames.forEach(entityName => {
       if (isOnline()) {
         try {
           await base44.entities[entityName].delete(id);
+          console.log(`${entityName} erfolgreich vom Server gelöscht:`, id);
           // Lokal auch löschen
           offlineStorage.deleteLocalItem(entityName, id);
         } catch (error) {
-          console.warn(`Online-Löschung fehlgeschlagen für ${entityName}, speichere lokal`, error);
+          console.error(`Online-Löschung fehlgeschlagen für ${entityName}, speichere lokal`, error);
           offlineStorage.deleteLocalItem(entityName, id);
           offlineStorage.addToSyncQueue({
             type: 'delete',
