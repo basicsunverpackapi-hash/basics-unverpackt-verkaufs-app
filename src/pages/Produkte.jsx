@@ -135,7 +135,7 @@ export default function Produkte() {
               className="overflow-hidden hover:shadow-lg hover:scale-102 transition-all duration-200 cursor-pointer border border-gray-200 hover:border-green-400 rounded-xl"
               onClick={() => handleProductClick(product)}
             >
-              <div className="aspect-[4/3] bg-gradient-to-br from-green-100 via-emerald-50 to-green-100 relative overflow-hidden">
+              <div className="flex-1 bg-gradient-to-br from-green-100 via-emerald-50 to-green-100 relative overflow-hidden flex items-center justify-center">
                 {product.image_url ? (
                   <img
                     src={product.image_url}
@@ -145,17 +145,14 @@ export default function Produkte() {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center p-4">
                     <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-                      <span className="text-sm text-white font-bold text-center px-2 leading-tight break-words">
-                        {product.name === 'Schoko Crunchy' ? 'Crunchy' : 
-                         product.name === 'Sanddorn Gummibärchen' ? 'Gummibärchen' : 
-                         product.name}
+                      <span className="text-lg text-white font-bold text-center px-3 leading-tight break-words">
+                        {product.name}
                       </span>
                     </div>
                   </div>
                 )}
               </div>
               <CardContent className="p-3 bg-white">
-                <h3 className="font-bold text-gray-900 mb-2 text-base line-clamp-2 leading-tight">{product.name}</h3>
                 <div className="flex justify-between items-center bg-green-50 rounded-lg p-2 border border-green-200">
                   <span className="text-lg font-bold text-green-700">
                     {product.price_per_unit?.toFixed(2)} €
