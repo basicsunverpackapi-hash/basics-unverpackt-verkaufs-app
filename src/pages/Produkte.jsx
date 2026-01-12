@@ -143,9 +143,9 @@ export default function Produkte() {
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-xs text-white font-bold text-center px-1">
+                  <div className="w-full h-full flex items-center justify-center p-4">
+                    <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                      <span className="text-sm text-white font-bold text-center px-2 leading-tight break-words">
                         {product.name === 'Schoko Crunchy' ? 'Crunchy' : 
                          product.name === 'Sanddorn Gummibärchen' ? 'Gummibärchen' : 
                          product.name}
