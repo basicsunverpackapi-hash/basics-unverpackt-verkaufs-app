@@ -264,20 +264,20 @@ export default function Analyse() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-6 shadow-lg text-white">
-        <div className="flex justify-between items-start">
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-4 sm:p-6 shadow-lg text-white">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
-            <h2 className="text-3xl font-bold">Berichte & Analysen</h2>
-            <p className="text-purple-100 mt-2">Detaillierte Verkaufsauswertungen</p>
+            <h2 className="text-2xl sm:text-3xl font-bold">Berichte & Analysen</h2>
+            <p className="text-purple-100 mt-2 text-sm sm:text-base">Detaillierte Verkaufsauswertungen</p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={exportToCSV} variant="outline" className="bg-white/20 hover:bg-white/30 border-white/40 text-white">
+          <div className="flex gap-2 flex-wrap w-full sm:w-auto">
+            <Button onClick={exportToCSV} variant="outline" className="bg-white/20 hover:bg-white/30 border-white/40 text-white flex-1 sm:flex-none">
               <Download className="w-4 h-4 mr-2" />
-              CSV
+              <span className="whitespace-nowrap">CSV</span>
             </Button>
-            <Button onClick={exportToPDF} variant="outline" className="bg-white/20 hover:bg-white/30 border-white/40 text-white">
+            <Button onClick={exportToPDF} variant="outline" className="bg-white/20 hover:bg-white/30 border-white/40 text-white flex-1 sm:flex-none">
               <FileText className="w-4 h-4 mr-2" />
-              PDF
+              <span className="whitespace-nowrap">PDF</span>
             </Button>
           </div>
         </div>

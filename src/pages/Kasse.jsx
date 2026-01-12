@@ -114,29 +114,30 @@ export default function Kasse() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-emerald-600 to-green-600 rounded-2xl p-6 shadow-lg text-white">
-        <div className="flex justify-between items-center">
+      <div className="bg-gradient-to-r from-emerald-600 to-green-600 rounded-2xl p-4 sm:p-6 shadow-lg text-white">
+        <div className="flex flex-col gap-4">
           <div>
-            <h2 className="text-3xl font-bold">Kasse</h2>
-            <p className="text-green-100 mt-2">Kassenstand und Übersicht</p>
+            <h2 className="text-2xl sm:text-3xl font-bold">Kasse</h2>
+            <p className="text-green-100 mt-2 text-sm sm:text-base">Kassenstand und Übersicht</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 flex-wrap">
             <Button 
               onClick={() => setDialogOpen(true)}
-              className="bg-white text-green-700 hover:bg-green-50 font-bold shadow-lg rounded-xl px-4 py-3"
+              className="bg-white text-green-700 hover:bg-green-50 font-bold shadow-lg rounded-xl px-3 py-2 sm:px-4 sm:py-3 flex-1 sm:flex-none text-sm sm:text-base"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              Bestand erfassen
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
+              <span className="hidden sm:inline">Bestand erfassen</span>
+              <span className="sm:hidden">Bestand</span>
             </Button>
             <Button 
               onClick={() => setCorrectionDialogOpen(true)}
-              className="bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-lg rounded-xl px-4 py-3"
+              className="bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-lg rounded-xl px-3 py-2 sm:px-4 sm:py-3 flex-1 sm:flex-none text-sm sm:text-base"
             >
               Korrigieren
             </Button>
             <Button 
               onClick={() => setEmptyDialogOpen(true)}
-              className="bg-red-600 text-white hover:bg-red-700 font-bold shadow-lg rounded-xl px-4 py-3"
+              className="bg-red-600 text-white hover:bg-red-700 font-bold shadow-lg rounded-xl px-3 py-2 sm:px-4 sm:py-3 flex-1 sm:flex-none text-sm sm:text-base"
             >
               Entleeren
             </Button>

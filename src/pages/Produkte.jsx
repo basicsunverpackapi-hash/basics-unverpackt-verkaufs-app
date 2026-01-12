@@ -143,13 +143,14 @@ export default function Produkte() {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-2 sm:p-3">
-                    <span className="text-sm sm:text-base md:text-lg lg:text-xl font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full overflow-hidden" style={{ 
+                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-3 sm:p-4 md:p-5">
+                    <span className="text-xs sm:text-sm md:text-base lg:text-lg font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full" style={{ 
                       display: '-webkit-box',
-                      WebkitLineClamp: '4',
+                      WebkitLineClamp: '5',
                       WebkitBoxOrient: 'vertical',
                       wordBreak: 'break-word',
-                      hyphens: 'auto'
+                      hyphens: 'auto',
+                      overflow: 'hidden'
                     }}>
                       {product.name}
                     </span>
