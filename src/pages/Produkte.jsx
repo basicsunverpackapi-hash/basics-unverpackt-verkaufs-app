@@ -132,7 +132,7 @@ export default function Produkte() {
           {filteredProducts.map((product) => (
             <Card 
               key={product.id} 
-              className="overflow-hidden hover:shadow-lg hover:scale-102 transition-all duration-200 cursor-pointer border border-gray-200 hover:border-green-400 rounded-xl"
+              className="overflow-hidden hover:shadow-lg hover:scale-102 transition-all duration-200 cursor-pointer border border-gray-200 hover:border-green-400 rounded-xl flex flex-col"
               onClick={() => handleProductClick(product)}
             >
               <div className="flex-1 bg-gradient-to-br from-green-100 via-emerald-50 to-green-100 relative overflow-hidden flex items-center justify-center">
