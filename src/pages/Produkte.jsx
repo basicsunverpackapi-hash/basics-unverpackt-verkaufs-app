@@ -53,20 +53,30 @@ export default function Produkte() {
 
   const handleSaleComplete = async (saleItem, paymentMethod) => {
     try {
+      if (!saleItem || !saleItem.product_id || !saleItem.total_price) {
+        toast.error('Ungültige Verkaufsdaten');
+        return;
+      }
+
       const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || '{}');
+      if (!currentSeller.name) {
+        toast.error('Kein Verkäufer angemeldet');
+        return;
+      }
+
       const saleData = {
         date: new Date().toISOString(),
         items: [saleItem],
-        total_amount: saleItem.total_price,
+        total_amount: Number(saleItem.total_price),
         payment_method: paymentMethod,
-        seller_name: currentSeller.name || 'Unbekannt'
+        seller_name: currentSeller.name
       };
       
       // Bei Bargeld-Zahlung auch CashRegister-Eintrag erstellen
       if (paymentMethod === 'Bargeld') {
         await offlineClient.entities.CashRegister.create({
-          seller_name: currentSeller.name || 'Unbekannt',
-          amount: saleItem.total_price,
+          seller_name: currentSeller.name,
+          amount: Number(saleItem.total_price),
           type: 'sale',
           date: new Date().toISOString(),
           note: `Verkauf: ${saleItem.product_name}`

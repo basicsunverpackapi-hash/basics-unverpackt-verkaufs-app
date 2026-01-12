@@ -65,13 +65,13 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
   const changeBreakdown = change > 0 ? calculateChange(change) : [];
 
   const handleComplete = () => {
-    if (weightKg > 0 && totalPrice > 0) {
+    if (weightKg > 0 && totalPrice > 0 && isFinite(weightKg) && isFinite(totalPrice)) {
       onComplete({
         product_id: product.id,
         product_name: product.name,
-        weight_kg: weightKg,
-        price_per_kg: pricePerKg,
-        total_price: totalPrice
+        weight_kg: Number(weightKg.toFixed(3)),
+        price_per_kg: Number(pricePerKg.toFixed(2)),
+        total_price: Number(totalPrice.toFixed(2))
       }, paymentMethod);
       setInputValue('');
       setReceivedMoney('');
