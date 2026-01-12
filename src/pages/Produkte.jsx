@@ -128,38 +128,40 @@ export default function Produkte() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filteredProducts.map((product) => (
             <Card 
               key={product.id} 
-              className="overflow-hidden hover:shadow-lg hover:scale-102 transition-all duration-200 cursor-pointer border border-gray-200 hover:border-green-400 rounded-xl flex flex-col"
+              className="group overflow-hidden hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer border-2 border-gray-100 hover:border-green-400 rounded-2xl flex flex-col bg-white"
               onClick={() => handleProductClick(product)}
             >
-              <div className="flex-1 bg-gradient-to-br from-green-100 via-emerald-50 to-green-100 relative overflow-hidden flex items-center justify-center">
+              <div className="aspect-square bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 relative overflow-hidden flex items-center justify-center">
                 {product.image_url ? (
                   <img
                     src={product.image_url}
                     alt={product.name}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center p-4">
-                    <div className="w-full h-full bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-                      <span className="text-lg text-white font-bold text-center px-3 leading-tight break-words">
+                  <div className="w-full h-full flex items-center justify-center p-5">
+                    <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 rounded-3xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300">
+                      <span className="text-xl font-extrabold text-white text-center px-4 leading-tight break-words drop-shadow-lg">
                         {product.name}
                       </span>
                     </div>
                   </div>
                 )}
               </div>
-              <CardContent className="p-3 bg-white">
-                <div className="flex justify-between items-center bg-green-50 rounded-lg p-2 border border-green-200">
-                  <span className="text-lg font-bold text-green-700">
-                    {product.price_per_unit?.toFixed(2)} €
-                  </span>
-                  <span className="text-sm text-gray-600 font-medium">
-                    / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
-                  </span>
+              <CardContent className="p-4 bg-white">
+                <div className="flex flex-col gap-1">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-2xl font-extrabold text-green-600">
+                      {product.price_per_unit?.toFixed(2)}€
+                    </span>
+                    <span className="text-base text-gray-500 font-semibold">
+                      {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)}kg` : `${product.unit_grams}g`}
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
