@@ -145,8 +145,10 @@ export default function Produkte() {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-2xl text-white font-bold">
-                        {product.name?.[0]?.toUpperCase()}
+                      <span className="text-xs text-white font-bold text-center px-1">
+                        {product.name === 'Schoko Crunchy' ? 'Crunchy' : 
+                         product.name === 'Sanddorn Gummibärchen' ? 'Gummibärchen' : 
+                         product.name}
                       </span>
                     </div>
                   </div>
