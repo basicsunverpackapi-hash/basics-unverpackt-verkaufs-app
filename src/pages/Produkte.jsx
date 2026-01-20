@@ -135,7 +135,7 @@ export default function Produkte() {
               className="group overflow-hidden hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer border-2 border-gray-100 hover:border-green-400 rounded-2xl flex flex-col bg-white"
               onClick={() => handleProductClick(product)}
             >
-              <div className="aspect-square bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 relative overflow-hidden flex items-center justify-center p-3 sm:p-4 md:p-5">
+              <div className="aspect-square relative overflow-hidden flex items-center justify-center">
                 {product.image_url ? (
                   <img
                     src={product.image_url}
@@ -143,7 +143,7 @@ export default function Produkte() {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 rounded-2xl sm:rounded-3xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-3 sm:p-4 md:p-5">
+                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-4 sm:p-5 md:p-6">
                     <span className="text-xs sm:text-sm md:text-base lg:text-lg font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full" style={{ 
                       display: '-webkit-box',
                       WebkitLineClamp: '5',
