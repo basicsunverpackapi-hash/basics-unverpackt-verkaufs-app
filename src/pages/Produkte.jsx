@@ -144,7 +144,7 @@ export default function Produkte() {
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-4 sm:p-5 md:p-6">
-                    <span className="text-xs sm:text-sm md:text-base lg:text-lg font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full" style={{ 
+                    <span className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full" style={{ 
                       display: '-webkit-box',
                       WebkitLineClamp: '5',
                       WebkitBoxOrient: 'vertical',

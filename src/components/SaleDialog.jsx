@@ -170,6 +170,11 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
                     setInputValue(value);
                   }
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && weightKg > 0) {
+                    handleNext();
+                  }
+                }}
                 placeholder={mode === 'weight' ? '0 g' : '0.00 €'}
                 className="text-lg"
                 autoFocus
@@ -281,6 +286,11 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
                 step="0.01"
                 value={receivedMoney}
                 onChange={(e) => setReceivedMoney(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && receivedMoney && change >= 0) {
+                    handleComplete();
+                  }
+                }}
                 placeholder="Betrag eingeben..."
                 className="text-lg"
                 autoFocus
