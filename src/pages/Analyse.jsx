@@ -32,7 +32,12 @@ export default function Analyse() {
     queryFn: () => offlineClient.entities.Seller.list()
   });
 
-  // Einnahmen berechnen (Verkaufspreis - Einkaufspreis)
+  const { data: purchases = [] } = useQuery({
+    queryKey: ['purchases'],
+    queryFn: () => offlineClient.entities.Purchase.list('-date', 1000)
+  });
+
+  // Einnahmen berechnen (Verkaufspreis - Einkaufspreis - Ladeneinkäufe)
   const calculateProfit = (sale) => {
     let profit = 0;
     sale.items?.forEach(item => {
@@ -45,6 +50,21 @@ export default function Analyse() {
       }
     });
     return profit;
+  };
+
+  // Ladeneinkäufe nach Zeitraum filtern
+  const getPurchasesForTimeframe = (timeframe) => {
+    const now = new Date();
+    return purchases.filter(p => {
+      const purchaseDate = new Date(p.date);
+      switch(timeframe) {
+        case 'today': return isAfter(purchaseDate, today);
+        case '7days': return isAfter(purchaseDate, last7Days);
+        case 'month': return isAfter(purchaseDate, thisMonth);
+        case 'year': return isAfter(purchaseDate, lastYear);
+        default: return true;
+      }
+    });
   };
 
   // CSV Export
@@ -125,12 +145,18 @@ export default function Analyse() {
   const thisMonthRevenue = thisMonthSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
   const lastYearRevenue = lastYearSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
 
-  // Einnahmen (Profit)
-  const totalProfit = sales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
-  const todayProfit = todaySales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
-  const last7DaysProfit = last7DaysSales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
-  const thisMonthProfit = thisMonthSales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
-  const lastYearProfit = lastYearSales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
+  // Einnahmen (Profit) minus Ladeneinkäufe
+  const totalPurchases = purchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const todayPurchases = getPurchasesForTimeframe('today').reduce((sum, p) => sum + (p.amount || 0), 0);
+  const last7DaysPurchases = getPurchasesForTimeframe('7days').reduce((sum, p) => sum + (p.amount || 0), 0);
+  const thisMonthPurchases = getPurchasesForTimeframe('month').reduce((sum, p) => sum + (p.amount || 0), 0);
+  const lastYearPurchases = getPurchasesForTimeframe('year').reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const totalProfit = sales.reduce((sum, sale) => sum + calculateProfit(sale), 0) - totalPurchases;
+  const todayProfit = todaySales.reduce((sum, sale) => sum + calculateProfit(sale), 0) - todayPurchases;
+  const last7DaysProfit = last7DaysSales.reduce((sum, sale) => sum + calculateProfit(sale), 0) - last7DaysPurchases;
+  const thisMonthProfit = thisMonthSales.reduce((sum, sale) => sum + calculateProfit(sale), 0) - thisMonthPurchases;
+  const lastYearProfit = lastYearSales.reduce((sum, sale) => sum + calculateProfit(sale), 0) - lastYearPurchases;
 
   // Filter Sales by Product/Seller
   let filteredSalesByFilters = timeFilter === 'today' ? todaySales :
@@ -151,7 +177,8 @@ export default function Analyse() {
   }
 
   const filteredRevenue = filteredSalesByFilters.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
-  const filteredProfit = filteredSalesByFilters.reduce((sum, sale) => sum + calculateProfit(sale), 0);
+  const filteredPurchases = getPurchasesForTimeframe(timeFilter).reduce((sum, p) => sum + (p.amount || 0), 0);
+  const filteredProfit = filteredSalesByFilters.reduce((sum, sale) => sum + calculateProfit(sale), 0) - filteredPurchases;
 
   // Chart-Daten basierend auf Filter
   let chartData = [];
@@ -160,8 +187,10 @@ export default function Analyse() {
   if (timeFilter === 'today') {
     for (let hour = 0; hour < 24; hour++) {
       const hourSales = filteredSalesByFilters.filter(s => new Date(s.date).getHours() === hour);
+      const hourPurchases = getPurchasesForTimeframe(timeFilter).filter(p => new Date(p.date).getHours() === hour);
       const revenue = hourSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
-      const profit = hourSales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
+      const purchaseAmount = hourPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+      const profit = hourSales.reduce((sum, sale) => sum + calculateProfit(sale), 0) - purchaseAmount;
       chartData.push({
         label: `${hour}:00`,
         revenue: revenue,
@@ -175,8 +204,13 @@ export default function Analyse() {
         const saleDate = startOfDay(new Date(s.date));
         return saleDate.getTime() === date.getTime();
       });
+      const dayPurchases = getPurchasesForTimeframe(timeFilter).filter(p => {
+        const purchaseDate = startOfDay(new Date(p.date));
+        return purchaseDate.getTime() === date.getTime();
+      });
       const revenue = daySales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
-      const profit = daySales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
+      const purchaseAmount = dayPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+      const profit = daySales.reduce((sum, sale) => sum + calculateProfit(sale), 0) - purchaseAmount;
       chartData.push({
         label: format(date, 'EEE dd.MM', { locale: de }),
         revenue: revenue,
@@ -192,8 +226,13 @@ export default function Analyse() {
           const saleDate = startOfDay(new Date(s.date));
           return saleDate.getTime() === startOfDay(date).getTime();
         });
+        const dayPurchases = getPurchasesForTimeframe(timeFilter).filter(p => {
+          const purchaseDate = startOfDay(new Date(p.date));
+          return purchaseDate.getTime() === startOfDay(date).getTime();
+        });
         const revenue = daySales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
-        const profit = daySales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
+        const purchaseAmount = dayPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const profit = daySales.reduce((sum, sale) => sum + calculateProfit(sale), 0) - purchaseAmount;
         chartData.push({
           label: format(date, 'dd.MM', { locale: de }),
           revenue: revenue,
@@ -209,8 +248,13 @@ export default function Analyse() {
         const saleDate = new Date(s.date);
         return saleDate >= monthStart && saleDate <= monthEnd;
       });
+      const monthPurchases = getPurchasesForTimeframe(timeFilter).filter(p => {
+        const purchaseDate = new Date(p.date);
+        return purchaseDate >= monthStart && purchaseDate <= monthEnd;
+      });
       const revenue = monthSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
-      const profit = monthSales.reduce((sum, sale) => sum + calculateProfit(sale), 0);
+      const purchaseAmount = monthPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+      const profit = monthSales.reduce((sum, sale) => sum + calculateProfit(sale), 0) - purchaseAmount;
       chartData.push({
         label: format(monthStart, 'MMM yy', { locale: de }),
         revenue: revenue,
