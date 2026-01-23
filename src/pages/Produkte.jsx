@@ -128,7 +128,7 @@ export default function Produkte() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
             <Card 
               key={product.id} 
@@ -137,16 +137,21 @@ export default function Produkte() {
             >
               <div className="aspect-square relative overflow-hidden flex items-center justify-center">
                 {product.image_url ? (
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
+                  <div className="relative w-full h-full">
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4">
+                      <p className="text-white font-bold text-xl md:text-2xl drop-shadow-lg">{product.name}</p>
+                    </div>
+                  </div>
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-6">
-                    <span className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full" style={{ 
+                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-8">
+                    <span className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full" style={{ 
                       display: '-webkit-box',
-                      WebkitLineClamp: '4',
+                      WebkitLineClamp: '3',
                       WebkitBoxOrient: 'vertical',
                       wordBreak: 'break-word',
                       hyphens: 'auto',
@@ -157,13 +162,16 @@ export default function Produkte() {
                   </div>
                 )}
               </div>
-              <CardContent className="p-5 bg-white">
+              <CardContent className="p-6 bg-white">
                 <div className="flex flex-col gap-2">
+                  {product.image_url && (
+                    <h3 className="text-xl font-bold text-gray-900 mb-1">{product.name}</h3>
+                  )}
                   <div className="flex justify-between items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-green-600">
+                    <span className="text-4xl font-extrabold text-green-600">
                       {product.price_per_unit?.toFixed(2)}€
                     </span>
-                    <span className="text-lg text-gray-500 font-semibold whitespace-nowrap">
+                    <span className="text-xl text-gray-500 font-semibold whitespace-nowrap">
                       {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)}kg` : `${product.unit_grams}g`}
                     </span>
                   </div>
