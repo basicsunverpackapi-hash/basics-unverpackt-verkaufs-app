@@ -5,7 +5,7 @@ import Kasse from './pages/Kasse';
 import Merkzettel from './pages/Merkzettel';
 import Produkte from './pages/Produkte';
 import verkUfe from './pages/Verkäufe';
-import Verkaufen from './pages/Verkaufen';
+import Kaufen from './pages/Kaufen';
 import __Layout from './Layout.jsx';
 
 
@@ -17,7 +17,7 @@ export const PAGES = {
     "Merkzettel": Merkzettel,
     "Produkte": Produkte,
     "Verkäufe": verkUfe,
-    "Verkaufen": Verkaufen,
+    "Kaufen": Kaufen,
 }
 
 export const pagesConfig = {

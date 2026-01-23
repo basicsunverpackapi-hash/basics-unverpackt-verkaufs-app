@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ShoppingBag } from 'lucide-react';
 
 export default function Layout({ children, currentPageName }) {
   const [syncing, setSyncing] = useState(false);
@@ -105,7 +106,7 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Merkzettel', icon: ClipboardList, path: 'Merkzettel', badge: shoppingList.length },
     ...(currentSeller?.is_admin ? [{ name: 'Kasse', icon: Wallet, path: 'Kasse' }] : []),
     { name: 'Bearbeiten', icon: Settings, path: 'Bearbeiten' },
-    { name: 'Verkaufen', icon: Package, path: 'Verkaufen' }
+    { name: 'Kaufen', icon: ShoppingBag, path: 'Kaufen' }
   ];
 
   // Don't show layout on auth page
