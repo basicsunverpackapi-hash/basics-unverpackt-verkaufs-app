@@ -104,7 +104,8 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Analyse', icon: BarChart3, path: 'Analyse' },
     { name: 'Merkzettel', icon: ClipboardList, path: 'Merkzettel', badge: shoppingList.length },
     ...(currentSeller?.is_admin ? [{ name: 'Kasse', icon: Wallet, path: 'Kasse' }] : []),
-    { name: 'Bearbeiten', icon: Settings, path: 'Bearbeiten' }
+    { name: 'Bearbeiten', icon: Settings, path: 'Bearbeiten' },
+    { name: 'Verkaufen', icon: Package, path: 'Verkaufen' }
   ];
 
   // Don't show layout on auth page
