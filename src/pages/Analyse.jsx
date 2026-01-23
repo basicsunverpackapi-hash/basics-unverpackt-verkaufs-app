@@ -9,11 +9,17 @@ import { BookOpen, TrendingUp, TrendingDown, DollarSign, Receipt, FileText, Cale
 import { format, startOfMonth, endOfMonth, startOfYear, subMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import jsPDF from 'jspdf';
+import { toast } from 'sonner';
 
 export default function Buchhaltung() {
   const [selectedPeriod, setSelectedPeriod] = useState('month'); // 'month', 'quarter', 'year'
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
+  // Dynamische Jahresliste: Aktuelles Jahr und 5 Jahre zurück
+  const currentYear = new Date().getFullYear();
+  const availableYears = Array.from({ length: 6 }, (_, i) => currentYear - i);
 
   const { data: sales = [] } = useQuery({
     queryKey: ['sales'],
@@ -125,6 +131,58 @@ export default function Buchhaltung() {
   const revenueChange = lastMonth.revenue > 0 ? ((currentMonth.revenue - lastMonth.revenue) / lastMonth.revenue) * 100 : 0;
   const profitChange = lastMonth.netProfit > 0 ? ((currentMonth.netProfit - lastMonth.netProfit) / lastMonth.netProfit) * 100 : 0;
 
+  // CSV Export
+  const exportToCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Kategorie,Betrag (€)\n";
+    csvContent += `Umsatz,${currentMonth.revenue.toFixed(2)}\n`;
+    csvContent += `Wareneinsatz,${currentMonth.cogs.toFixed(2)}\n`;
+    csvContent += `Bruttogewinn,${currentMonth.grossProfit.toFixed(2)}\n`;
+    csvContent += `Betriebsausgaben,${currentMonth.expenses.toFixed(2)}\n`;
+    csvContent += `Nettogewinn,${currentMonth.netProfit.toFixed(2)}\n`;
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `buchhaltung_${months[selectedMonth]}_${selectedYear}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('CSV-Datei heruntergeladen');
+  };
+
+  // PDF Export
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    
+    doc.setFontSize(20);
+    doc.text('Buchhaltungsbericht', 14, 20);
+    
+    doc.setFontSize(11);
+    doc.text(`Zeitraum: ${months[selectedMonth]} ${selectedYear}`, 14, 30);
+    doc.text(`Erstellt am: ${format(new Date(), 'dd.MM.yyyy HH:mm', { locale: de })}`, 14, 37);
+    
+    let y = 50;
+    doc.setFontSize(14);
+    doc.text('Gewinn- und Verlustrechnung', 14, y);
+    
+    y += 10;
+    doc.setFontSize(11);
+    doc.text(`Betriebseinnahmen: ${currentMonth.revenue.toFixed(2)} EUR`, 20, y);
+    y += 7;
+    doc.text(`Wareneinsatz: -${currentMonth.cogs.toFixed(2)} EUR`, 20, y);
+    y += 7;
+    doc.text(`Bruttogewinn: ${currentMonth.grossProfit.toFixed(2)} EUR`, 20, y);
+    y += 7;
+    doc.text(`Betriebsausgaben: -${currentMonth.expenses.toFixed(2)} EUR`, 20, y);
+    y += 10;
+    doc.setFontSize(13);
+    doc.text(`Nettogewinn: ${currentMonth.netProfit.toFixed(2)} EUR`, 20, y);
+    
+    doc.save(`buchhaltung_${months[selectedMonth]}_${selectedYear}.pdf`);
+    toast.success('PDF-Datei heruntergeladen');
+  };
+
   const months = [
     'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
     'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
@@ -143,9 +201,13 @@ export default function Buchhaltung() {
             <p className="text-slate-300 mt-2">Professionelle Finanzverwaltung & Reporting</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="bg-white/10 hover:bg-white/20 border-white/30 text-white">
+            <Button onClick={exportToCSV} variant="outline" className="bg-white/10 hover:bg-white/20 border-white/30 text-white">
               <Download className="w-4 h-4 mr-2" />
-              Export
+              CSV Export
+            </Button>
+            <Button onClick={exportToPDF} variant="outline" className="bg-white/10 hover:bg-white/20 border-white/30 text-white">
+              <FileText className="w-4 h-4 mr-2" />
+              PDF Export
             </Button>
           </div>
         </div>
@@ -161,10 +223,9 @@ export default function Buchhaltung() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2026">2026</SelectItem>
-                <SelectItem value="2027">2027</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             

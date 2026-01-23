@@ -102,7 +102,7 @@ export default function Layout({ children, currentPageName }) {
   const menuItems = [
     { name: 'Produkte', icon: Package, path: 'Produkte' },
     { name: 'Verkäufe', icon: ShoppingCart, path: 'Verkäufe' },
-    { name: 'Analyse', icon: BarChart3, path: 'Analyse' },
+    { name: 'Buchhaltung', icon: BarChart3, path: 'Analyse' },
     { name: 'Merkzettel', icon: ClipboardList, path: 'Merkzettel', badge: shoppingList.length },
     ...(currentSeller?.is_admin ? [{ name: 'Kasse', icon: Wallet, path: 'Kasse' }] : []),
     { name: 'Bearbeiten', icon: Settings, path: 'Bearbeiten' },
