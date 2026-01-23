@@ -146,7 +146,7 @@ export default function Kasse() {
     sellerStats[sale.seller_name].sales += sale.total_amount || 0;
   });
 
-  // Alle Aktivitäten (neueste zuerst)
+  // Alle Aktivitäten (neueste zuerst) - ohne Verkäufe
   const allActivities = [
     ...cashEntries.map(e => ({ ...e, activityType: 'entry' })),
     ...cashPurchases.map(p => ({ ...p, activityType: 'purchase' }))
