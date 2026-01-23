@@ -28,6 +28,11 @@ export default function Kasse() {
     queryFn: () => offlineClient.entities.CashRegister.list('-date', 1000)
   });
 
+  const { data: sales = [] } = useQuery({
+    queryKey: ['sales'],
+    queryFn: () => offlineClient.entities.Sale.list('-date', 1000)
+  });
+
   const { data: purchases = [] } = useQuery({
     queryKey: ['purchases'],
     queryFn: () => offlineClient.entities.Purchase.list('-date', 1000)
@@ -115,21 +120,30 @@ export default function Kasse() {
   };
 
   // Berechne Kassensummen (inkl. Ladeneinkäufe)
+  const cashSales = sales.filter(sale => sale.payment_method === 'Bargeld');
   const cashPurchases = purchases.filter(p => p.payment_method === 'Bargeld');
   
   const totalFromEntries = cashEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+  const totalFromSales = cashSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
   const totalFromPurchases = cashPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
   
-  const totalCash = totalFromEntries - totalFromPurchases;
+  const totalCash = totalFromEntries + totalFromSales - totalFromPurchases;
 
   // Gruppiere nach Verkäufer
   const sellerStats = {};
   
   cashEntries.forEach(entry => {
     if (!sellerStats[entry.seller_name]) {
-      sellerStats[entry.seller_name] = { entries: 0 };
+      sellerStats[entry.seller_name] = { entries: 0, sales: 0 };
     }
     sellerStats[entry.seller_name].entries += entry.amount || 0;
+  });
+
+  cashSales.forEach(sale => {
+    if (!sellerStats[sale.seller_name]) {
+      sellerStats[sale.seller_name] = { entries: 0, sales: 0 };
+    }
+    sellerStats[sale.seller_name].sales += sale.total_amount || 0;
   });
 
   // Alle Aktivitäten (neueste zuerst)
@@ -202,13 +216,13 @@ export default function Kasse() {
                   <div>
                     <p className="font-semibold">{seller}</p>
                     <p className="text-sm text-gray-500">
-                      Einträge: {stats.entries.toFixed(2)} €
+                      Einträge: {stats.entries.toFixed(2)} € | Verkäufe: {stats.sales.toFixed(2)} €
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className="text-2xl font-bold text-green-600">
-                    {stats.entries.toFixed(2)} €
+                    {(stats.entries + stats.sales).toFixed(2)} €
                   </p>
                   <p className="text-xs text-gray-500">Gesamt</p>
                 </div>
