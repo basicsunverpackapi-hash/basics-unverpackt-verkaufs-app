@@ -222,12 +222,12 @@ export default function Buchhaltung() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-green-700">Bruttogewinn</p>
+                <p className="text-sm font-medium text-green-700">Bruttogewinn (vor Ausgaben)</p>
                 <p className="text-3xl font-bold text-green-900 mt-2">
                   {currentMonth.grossProfit.toFixed(2)} €
                 </p>
                 <div className="mt-2 text-sm text-gray-600">
-                  <span>Marge: {currentMonth.revenue > 0 ? ((currentMonth.grossProfit / currentMonth.revenue) * 100).toFixed(1) : 0}%</span>
+                  <span>Gewinnspanne: {currentMonth.revenue > 0 ? ((currentMonth.grossProfit / currentMonth.revenue) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
               <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
@@ -242,7 +242,7 @@ export default function Buchhaltung() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-purple-700">Nettogewinn</p>
+                <p className="text-sm font-medium text-purple-700">Nettogewinn (reiner Gewinn)</p>
                 <p className="text-3xl font-bold text-purple-900 mt-2">
                   {currentMonth.netProfit.toFixed(2)} €
                 </p>
@@ -265,7 +265,7 @@ export default function Buchhaltung() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Gewinn- und Verlustrechnung (GuV)
+            GuV (Gewinn- und Verlustrechnung)
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -278,13 +278,13 @@ export default function Buchhaltung() {
 
             {/* Wareneinsatz */}
             <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg pl-8">
-              <span className="text-gray-700">Wareneinsatz (COGS)</span>
+              <span className="text-gray-700">Wareneinsatz (Einkaufskosten der verkauften Waren)</span>
               <span className="text-lg font-medium text-red-700">- {currentMonth.cogs.toFixed(2)} €</span>
             </div>
 
             {/* Bruttogewinn */}
             <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
-              <span className="font-semibold text-gray-900">Bruttogewinn</span>
+              <span className="font-semibold text-gray-900">Bruttogewinn (Umsatz minus Wareneinsatz)</span>
               <span className="text-xl font-bold text-green-900">{currentMonth.grossProfit.toFixed(2)} €</span>
             </div>
 
@@ -296,7 +296,7 @@ export default function Buchhaltung() {
 
             {/* Nettogewinn */}
             <div className="flex justify-between items-center p-4 bg-gradient-to-r from-purple-100 to-purple-50 rounded-lg border-2 border-purple-300">
-              <span className="font-bold text-lg text-gray-900">Nettogewinn</span>
+              <span className="font-bold text-lg text-gray-900">Nettogewinn (Übrig nach allen Kosten)</span>
               <span className="text-2xl font-bold text-purple-900">{currentMonth.netProfit.toFixed(2)} €</span>
             </div>
           </div>
