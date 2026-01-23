@@ -29,6 +29,11 @@ export default function Kasse() {
     queryFn: () => offlineClient.entities.Sale.list('-date', 1000)
   });
 
+  const { data: purchases = [] } = useQuery({
+    queryKey: ['purchases'],
+    queryFn: () => offlineClient.entities.Purchase.list('-date', 1000)
+  });
+
   const addCashMutation = useMutation({
     mutationFn: (data) => offlineClient.entities.CashRegister.create(data),
     onSuccess: () => {
@@ -83,13 +88,15 @@ export default function Kasse() {
     });
   };
 
-  // Berechne Kassensummen
+  // Berechne Kassensummen (inkl. Ladeneinkäufe)
   const cashSales = sales.filter(sale => sale.payment_method === 'Bargeld');
+  const cashPurchases = purchases.filter(p => p.payment_method === 'Bargeld');
   
   const totalFromEntries = cashEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
   const totalFromSales = cashSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
+  const totalFromPurchases = cashPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
   
-  const totalCash = totalFromEntries + totalFromSales;
+  const totalCash = totalFromEntries + totalFromSales - totalFromPurchases;
 
   // Gruppiere nach Verkäufer
   const sellerStats = {};
@@ -111,6 +118,7 @@ export default function Kasse() {
   // Heutige Einträge
   const todayEntries = cashEntries.filter(entry => isToday(new Date(entry.date)));
   const todaySales = cashSales.filter(sale => isToday(new Date(sale.date)));
+  const todayPurchases = cashPurchases.filter(p => isToday(new Date(p.date)));
 
   return (
     <div className="space-y-6">
@@ -213,7 +221,18 @@ export default function Kasse() {
                 <p className="text-lg font-bold text-blue-600">+{entry.amount.toFixed(2)} €</p>
               </div>
             ))}
-            {todayEntries.length === 0 && (
+            {todayPurchases.map(purchase => (
+              <div key={purchase.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <div>
+                  <p className="font-medium">{purchase.seller_name}</p>
+                  <p className="text-sm text-gray-600">
+                    {format(new Date(purchase.date), 'HH:mm', { locale: de })} Uhr - Einkauf: {purchase.item_name}
+                  </p>
+                </div>
+                <p className="text-lg font-bold text-red-600">-{purchase.amount.toFixed(2)} €</p>
+              </div>
+            ))}
+            {todayEntries.length === 0 && todayPurchases.length === 0 && (
               <p className="text-center text-gray-500 py-4">Noch keine Kasseneinträge heute</p>
             )}
           </div>
