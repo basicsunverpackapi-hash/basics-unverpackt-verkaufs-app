@@ -20,6 +20,7 @@ export default function Kasse() {
   const [emptyMode, setEmptyMode] = useState('remaining'); // 'remaining' oder 'taken'
   const [emptyAmount, setEmptyAmount] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [visibleActivities, setVisibleActivities] = useState(10);
   const queryClient = useQueryClient();
 
   const { data: cashEntries = [] } = useQuery({
@@ -149,7 +150,9 @@ export default function Kasse() {
   const allActivities = [
     ...cashEntries.map(e => ({ ...e, activityType: 'entry' })),
     ...cashPurchases.map(p => ({ ...p, activityType: 'purchase' }))
-  ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 50);
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+  
+  const displayedActivities = allActivities.slice(0, visibleActivities);
 
   return (
     <div className="space-y-6">
@@ -237,10 +240,10 @@ export default function Kasse() {
         <CardContent className="p-6">
           <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Aktivitäten (letzte 50)
+            Aktivitäten
           </h3>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {allActivities.map(activity => {
+          <div className="space-y-2">
+            {displayedActivities.map(activity => {
               if (activity.activityType === 'entry') {
                 return (
                   <div key={`entry-${activity.id}`} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -286,10 +289,22 @@ export default function Kasse() {
                 );
               }
             })}
-            {allActivities.length === 0 && (
+            {displayedActivities.length === 0 && (
               <p className="text-center text-gray-500 py-4">Noch keine Aktivitäten vorhanden</p>
             )}
           </div>
+          
+          {visibleActivities < allActivities.length && (
+            <div className="mt-4 text-center">
+              <Button
+                variant="outline"
+                onClick={() => setVisibleActivities(prev => prev + 10)}
+                className="w-full"
+              >
+                Mehr laden ({allActivities.length - visibleActivities} weitere)
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
