@@ -13,7 +13,7 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Cart
 export default function Buchhaltung() {
   const [selectedPeriod, setSelectedPeriod] = useState('month'); // 'month', 'quarter', 'year'
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const [selectedYear] = useState(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const { data: sales = [] } = useQuery({
     queryKey: ['sales'],
@@ -155,7 +155,20 @@ export default function Buchhaltung() {
       <Card>
         <CardContent className="p-4">
           <div className="flex gap-3 items-center flex-wrap">
-            <label className="text-sm font-medium">Monat:</label>
+            <label className="text-sm font-medium">Jahr:</label>
+            <Select value={selectedYear.toString()} onValueChange={(val) => setSelectedYear(parseInt(val))}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2027">2027</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <label className="text-sm font-medium ml-4">Monat:</label>
             <Select value={selectedMonth.toString()} onValueChange={(val) => setSelectedMonth(parseInt(val))}>
               <SelectTrigger className="w-40">
                 <SelectValue />
@@ -166,6 +179,7 @@ export default function Buchhaltung() {
                 ))}
               </SelectContent>
             </Select>
+            
             <span className="text-sm text-gray-600">
               {format(currentMonthStart, 'dd.MM.yyyy', { locale: de })} - {format(currentMonthEnd, 'dd.MM.yyyy', { locale: de })}
             </span>
