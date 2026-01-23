@@ -5,7 +5,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import React from 'react';
 import { Wallet, Plus, TrendingUp, User, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, startOfDay, isToday } from 'date-fns';
