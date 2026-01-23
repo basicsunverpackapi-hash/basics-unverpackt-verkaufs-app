@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import React from 'react';
 import { Wallet, Plus, TrendingUp, User, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, startOfDay, isToday } from 'date-fns';
@@ -17,6 +18,9 @@ export default function Kasse() {
   const [initialAmount, setInitialAmount] = useState('');
   const [correctionAmount, setCorrectionAmount] = useState('');
   const [note, setNote] = useState('');
+  const [emptyMode, setEmptyMode] = useState('remaining'); // 'remaining' oder 'taken'
+  const [emptyAmount, setEmptyAmount] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: cashEntries = [] } = useQuery({
@@ -34,6 +38,15 @@ export default function Kasse() {
     queryFn: () => offlineClient.entities.Purchase.list('-date', 1000)
   });
 
+  // Check Admin Status
+  React.useEffect(() => {
+    const seller = localStorage.getItem('currentSeller');
+    if (seller) {
+      const parsed = JSON.parse(seller);
+      setIsAdmin(parsed.is_admin || false);
+    }
+  }, []);
+
   const addCashMutation = useMutation({
     mutationFn: (data) => offlineClient.entities.CashRegister.create(data),
     onSuccess: () => {
@@ -44,7 +57,16 @@ export default function Kasse() {
       setCorrectionDialogOpen(false);
       setInitialAmount('');
       setCorrectionAmount('');
+      setEmptyAmount('');
       setNote('');
+    }
+  });
+
+  const deleteEntryMutation = useMutation({
+    mutationFn: (id) => offlineClient.entities.CashRegister.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cashRegister'] });
+      toast.success('Eintrag gelöscht');
     }
   });
 
@@ -65,12 +87,21 @@ export default function Kasse() {
     e.preventDefault();
     const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || '{}');
     
+    let amountToDeduct = 0;
+    if (emptyMode === 'remaining') {
+      // Benutzer gibt an, wieviel übrig bleiben soll
+      amountToDeduct = -(totalCash - parseFloat(emptyAmount || 0));
+    } else {
+      // Benutzer gibt an, wieviel entnommen wurde
+      amountToDeduct = -parseFloat(emptyAmount || 0);
+    }
+    
     addCashMutation.mutate({
       seller_name: currentSeller.name || 'Unbekannt',
-      amount: -totalCash,
+      amount: amountToDeduct,
       type: 'empty',
       date: new Date().toISOString(),
-      note: note || 'Kasse entleert'
+      note: note || `${emptyMode === 'remaining' ? 'Kasse teilweise entleert' : 'Entnahme'}`
     });
   };
 
@@ -115,10 +146,11 @@ export default function Kasse() {
     sellerStats[sale.seller_name].sales += sale.total_amount || 0;
   });
 
-  // Heutige Einträge
-  const todayEntries = cashEntries.filter(entry => isToday(new Date(entry.date)));
-  const todaySales = cashSales.filter(sale => isToday(new Date(sale.date)));
-  const todayPurchases = cashPurchases.filter(p => isToday(new Date(p.date)));
+  // Alle Aktivitäten (neueste zuerst)
+  const allActivities = [
+    ...cashEntries.map(e => ({ ...e, activityType: 'entry' })),
+    ...cashPurchases.map(p => ({ ...p, activityType: 'purchase' }))
+  ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 50);
 
   return (
     <div className="space-y-6">
@@ -175,7 +207,7 @@ export default function Kasse() {
           <div className="space-y-3">
             {Object.entries(sellerStats).map(([seller, stats]) => (
               <div key={seller} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                     <User className="w-5 h-5 text-green-600" />
                   </div>
@@ -201,39 +233,62 @@ export default function Kasse() {
         </CardContent>
       </Card>
 
-      {/* Heutige Aktivitäten */}
+      {/* Aktivitäten */}
       <Card>
         <CardContent className="p-6">
           <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Heutige Aktivitäten
+            Aktivitäten (letzte 50)
           </h3>
-          <div className="space-y-2">
-            {todayEntries.map(entry => (
-              <div key={entry.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div>
-                  <p className="font-medium">{entry.seller_name}</p>
-                  <p className="text-sm text-gray-600">
-                    {format(new Date(entry.date), 'HH:mm', { locale: de })} Uhr
-                    {entry.note && ` - ${entry.note}`}
-                  </p>
-                </div>
-                <p className="text-lg font-bold text-blue-600">+{entry.amount.toFixed(2)} €</p>
-              </div>
-            ))}
-            {todayPurchases.map(purchase => (
-              <div key={purchase.id} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <div>
-                  <p className="font-medium">{purchase.seller_name}</p>
-                  <p className="text-sm text-gray-600">
-                    {format(new Date(purchase.date), 'HH:mm', { locale: de })} Uhr - Einkauf: {purchase.item_name}
-                  </p>
-                </div>
-                <p className="text-lg font-bold text-red-600">-{purchase.amount.toFixed(2)} €</p>
-              </div>
-            ))}
-            {todayEntries.length === 0 && todayPurchases.length === 0 && (
-              <p className="text-center text-gray-500 py-4">Noch keine Kasseneinträge heute</p>
+          <div className="space-y-2 max-h-96 overflow-y-auto">
+            {allActivities.map(activity => {
+              if (activity.activityType === 'entry') {
+                return (
+                  <div key={`entry-${activity.id}`} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex-1">
+                      <p className="font-medium">{activity.seller_name}</p>
+                      <p className="text-sm text-gray-600">
+                        {format(new Date(activity.date), 'dd.MM.yyyy HH:mm', { locale: de })} Uhr
+                        {activity.note && ` - ${activity.note}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className={`text-lg font-bold ${activity.amount >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                        {activity.amount >= 0 ? '+' : ''}{activity.amount.toFixed(2)} €
+                      </p>
+                      {isAdmin && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (confirm('Diesen Eintrag wirklich löschen?')) {
+                              deleteEntryMutation.mutate(activity.id);
+                            }
+                          }}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-100 h-8 w-8 p-0"
+                        >
+                          ✕
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              } else {
+                return (
+                  <div key={`purchase-${activity.id}`} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <div className="flex-1">
+                      <p className="font-medium">{activity.seller_name}</p>
+                      <p className="text-sm text-gray-600">
+                        {format(new Date(activity.date), 'dd.MM.yyyy HH:mm', { locale: de })} Uhr - Einkauf: {activity.item_name}
+                      </p>
+                    </div>
+                    <p className="text-lg font-bold text-red-600">-{activity.amount.toFixed(2)} €</p>
+                  </div>
+                );
+              }
+            })}
+            {allActivities.length === 0 && (
+              <p className="text-center text-gray-500 py-4">Noch keine Aktivitäten vorhanden</p>
             )}
           </div>
         </CardContent>
@@ -294,20 +349,63 @@ export default function Kasse() {
       <Dialog open={emptyDialogOpen} onOpenChange={setEmptyDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-red-600">Kasse entleeren</DialogTitle>
+            <DialogTitle className="text-orange-600">Geld aus Kasse entnehmen</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4">
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
                 Aktueller Kassenstand: <span className="font-bold">{totalCash.toFixed(2)} €</span>
-              </p>
-              <p className="text-sm text-red-600 mt-2">
-                Diese Aktion zieht den gesamten Kassenstand ab und setzt ihn auf 0 €.
               </p>
             </div>
 
             <form onSubmit={handleEmptyCash} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Modus wählen</label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={emptyMode === 'remaining' ? 'default' : 'outline'}
+                    onClick={() => setEmptyMode('remaining')}
+                    className="flex-1"
+                  >
+                    Rest angeben
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={emptyMode === 'taken' ? 'default' : 'outline'}
+                    onClick={() => setEmptyMode('taken')}
+                    className="flex-1"
+                  >
+                    Entnahme angeben
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  {emptyMode === 'remaining' ? 'Wie viel soll übrig bleiben? (€)' : 'Wie viel wurde entnommen? (€)'}
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={emptyAmount}
+                  onChange={(e) => setEmptyAmount(e.target.value)}
+                  placeholder="0.00"
+                  required
+                  autoFocus
+                />
+                {emptyAmount && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    {emptyMode === 'remaining' 
+                      ? `Entnommen werden: ${(totalCash - parseFloat(emptyAmount || 0)).toFixed(2)} €`
+                      : `Neuer Kassenstand: ${(totalCash - parseFloat(emptyAmount || 0)).toFixed(2)} €`
+                    }
+                  </p>
+                )}
+              </div>
+
               <div>
                 <label className="text-sm font-medium mb-2 block">Notiz (optional)</label>
                 <Input
@@ -323,6 +421,7 @@ export default function Kasse() {
                   variant="outline" 
                   onClick={() => {
                     setEmptyDialogOpen(false);
+                    setEmptyAmount('');
                     setNote('');
                   }} 
                   className="flex-1"
@@ -331,9 +430,9 @@ export default function Kasse() {
                 </Button>
                 <Button 
                   type="submit" 
-                  className="flex-1 bg-red-600 hover:bg-red-700"
+                  className="flex-1 bg-orange-600 hover:bg-orange-700"
                 >
-                  Kasse entleeren
+                  Bestätigen
                 </Button>
               </div>
             </form>
