@@ -128,7 +128,7 @@ export default function Produkte() {
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {filteredProducts.map((product) => (
             <Card 
               key={product.id} 
@@ -143,10 +143,10 @@ export default function Produkte() {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-4 sm:p-5 md:p-6">
-                    <span className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full" style={{ 
+                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-6">
+                    <span className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full" style={{ 
                       display: '-webkit-box',
-                      WebkitLineClamp: '5',
+                      WebkitLineClamp: '4',
                       WebkitBoxOrient: 'vertical',
                       wordBreak: 'break-word',
                       hyphens: 'auto',
@@ -157,13 +157,13 @@ export default function Produkte() {
                   </div>
                 )}
               </div>
-              <CardContent className="p-2 sm:p-3 md:p-4 bg-white">
-                <div className="flex flex-col gap-1">
-                  <div className="flex justify-between items-baseline gap-1">
-                    <span className="text-lg sm:text-xl md:text-2xl font-extrabold text-green-600">
+              <CardContent className="p-5 bg-white">
+                <div className="flex flex-col gap-2">
+                  <div className="flex justify-between items-baseline gap-2">
+                    <span className="text-3xl font-extrabold text-green-600">
                       {product.price_per_unit?.toFixed(2)}€
                     </span>
-                    <span className="text-xs sm:text-sm md:text-base text-gray-500 font-semibold whitespace-nowrap">
+                    <span className="text-lg text-gray-500 font-semibold whitespace-nowrap">
                       {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)}kg` : `${product.unit_grams}g`}
                     </span>
                   </div>
