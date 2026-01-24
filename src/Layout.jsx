@@ -75,18 +75,7 @@ export default function Layout({ children, currentPageName }) {
     };
   }, []);
 
-  // Auto-Logout beim Schließen der App
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      localStorage.removeItem('currentSeller');
-    };
-    
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, []);
+
 
   const handleLogout = () => {
     localStorage.removeItem('currentSeller');
