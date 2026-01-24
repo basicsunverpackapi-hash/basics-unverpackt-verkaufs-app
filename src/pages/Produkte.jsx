@@ -143,35 +143,28 @@ export default function Produkte() {
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-4">
-                      <p className="text-white font-bold text-xl md:text-2xl drop-shadow-lg">{product.name}</p>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3">
+                      <p className="text-white font-bold text-base md:text-lg drop-shadow-lg line-clamp-2">{product.name}</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-8">
-                    <span className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white text-center leading-tight break-words drop-shadow-lg w-full" style={{ 
-                      display: '-webkit-box',
-                      WebkitLineClamp: '3',
-                      WebkitBoxOrient: 'vertical',
-                      wordBreak: 'break-word',
-                      hyphens: 'auto',
-                      overflow: 'hidden'
-                    }}>
+                  <div className="w-full h-full bg-gradient-to-br from-green-500 via-emerald-600 to-green-600 flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow duration-300 p-4">
+                    <span className="text-xl md:text-2xl font-extrabold text-white text-center leading-tight break-words drop-shadow-lg line-clamp-3">
                       {product.name}
                     </span>
                   </div>
                 )}
               </div>
-              <CardContent className="p-6 bg-white">
-                <div className="flex flex-col gap-2">
+              <CardContent className="p-4 bg-white">
+                <div className="flex flex-col gap-1">
                   {product.image_url && (
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">{product.name}</h3>
+                    <h3 className="text-base font-bold text-gray-900 mb-1 line-clamp-2">{product.name}</h3>
                   )}
                   <div className="flex justify-between items-baseline gap-2">
-                    <span className="text-4xl font-extrabold text-green-600">
+                    <span className="text-2xl font-extrabold text-green-600">
                       {product.price_per_unit?.toFixed(2)}€
                     </span>
-                    <span className="text-xl text-gray-500 font-semibold whitespace-nowrap">
+                    <span className="text-sm text-gray-500 font-semibold whitespace-nowrap">
                       {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)}kg` : `${product.unit_grams}g`}
                     </span>
                   </div>
