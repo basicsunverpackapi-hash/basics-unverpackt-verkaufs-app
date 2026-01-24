@@ -33,15 +33,6 @@ export default function Layout({ children, currentPageName }) {
     } else if (seller) {
       try {
         setCurrentSeller(JSON.parse(seller));
-        
-        // Beim ersten Laden: Daten vom Server laden wenn online
-        if (isOnline()) {
-          offlineSync.sync().then(() => {
-            console.log('Initial sync completed');
-          }).catch(err => {
-            console.error('Initial sync failed:', err);
-          });
-        }
       } catch (error) {
         console.error('Fehler beim Parsen des Verkäufers:', error);
         localStorage.removeItem('currentSeller');
@@ -63,25 +54,16 @@ export default function Layout({ children, currentPageName }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Online/Offline Status überwachen & Auto-Sync
+  // Online/Offline Status überwachen (ohne Auto-Sync)
   useEffect(() => {
     const handleOnline = async () => {
       setOnline(true);
-      toast.success('Online - Daten werden synchronisiert');
-      // Auto-Sync bei Verbindungswiederherstellung
-      const queue = offlineSync.getSyncQueue();
-      if (queue.length > 0) {
-        toast.info(`${queue.length} ausstehende Änderungen werden synchronisiert...`);
-        setTimeout(() => handleSync(true), 1000);
-      } else {
-        // Auch ohne Queue-Items: Server-Daten laden
-        setTimeout(() => handleSync(true), 500);
-      }
+      toast.success('Online - Sie können manuell synchronisieren');
     };
     
     const handleOffline = () => {
       setOnline(false);
-      toast.warning('Offline-Modus aktiv - Änderungen werden lokal gespeichert');
+      toast.warning('Offline-Modus aktiv');
     };
     
     window.addEventListener('online', handleOnline);
@@ -90,6 +72,19 @@ export default function Layout({ children, currentPageName }) {
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Auto-Logout beim Schließen der App
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem('currentSeller');
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
