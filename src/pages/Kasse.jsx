@@ -19,7 +19,7 @@ export default function Kasse() {
   const [note, setNote] = useState('');
   const [emptyMode, setEmptyMode] = useState('remaining'); // 'remaining' oder 'taken'
   const [emptyAmount, setEmptyAmount] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
+
   const [visibleActivities, setVisibleActivities] = useState(10);
   const queryClient = useQueryClient();
 
@@ -28,24 +28,14 @@ export default function Kasse() {
     queryFn: () => offlineClient.entities.CashRegister.list('-date', 1000)
   });
 
-  const { data: sales = [] } = useQuery({
-    queryKey: ['sales'],
-    queryFn: () => offlineClient.entities.Sale.list('-date', 1000)
-  });
+
 
   const { data: purchases = [] } = useQuery({
     queryKey: ['purchases'],
     queryFn: () => offlineClient.entities.Purchase.list('-date', 1000)
   });
 
-  // Check Admin Status
-  React.useEffect(() => {
-    const seller = localStorage.getItem('currentSeller');
-    if (seller) {
-      const parsed = JSON.parse(seller);
-      setIsAdmin(parsed.is_admin || false);
-    }
-  }, []);
+
 
   const addCashMutation = useMutation({
     mutationFn: (data) => offlineClient.entities.CashRegister.create(data),
@@ -62,13 +52,7 @@ export default function Kasse() {
     }
   });
 
-  const deleteEntryMutation = useMutation({
-    mutationFn: (id) => offlineClient.entities.CashRegister.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cashRegister'] });
-      toast.success('Eintrag gelöscht');
-    }
-  });
+
 
   const handleAddInitialAmount = (e) => {
     e.preventDefault();
@@ -119,31 +103,22 @@ export default function Kasse() {
     });
   };
 
-  // Berechne Kassensummen (inkl. Ladeneinkäufe)
-  const cashSales = sales.filter(sale => sale.payment_method === 'Bargeld');
+  // Berechne Kassensummen (nur Einträge und Ladeneinkäufe)
   const cashPurchases = purchases.filter(p => p.payment_method === 'Bargeld');
   
   const totalFromEntries = cashEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-  const totalFromSales = cashSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
   const totalFromPurchases = cashPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
   
-  const totalCash = totalFromEntries + totalFromSales - totalFromPurchases;
+  const totalCash = totalFromEntries - totalFromPurchases;
 
   // Gruppiere nach Verkäufer
   const sellerStats = {};
   
   cashEntries.forEach(entry => {
     if (!sellerStats[entry.seller_name]) {
-      sellerStats[entry.seller_name] = { entries: 0, sales: 0 };
+      sellerStats[entry.seller_name] = { entries: 0 };
     }
     sellerStats[entry.seller_name].entries += entry.amount || 0;
-  });
-
-  cashSales.forEach(sale => {
-    if (!sellerStats[sale.seller_name]) {
-      sellerStats[sale.seller_name] = { entries: 0, sales: 0 };
-    }
-    sellerStats[sale.seller_name].sales += sale.total_amount || 0;
   });
 
   // Alle Aktivitäten (neueste zuerst) - ohne Verkäufe
@@ -216,16 +191,16 @@ export default function Kasse() {
                   <div>
                     <p className="font-semibold">{seller}</p>
                     <p className="text-sm text-gray-500">
-                      Einträge: {stats.entries.toFixed(2)} € | Verkäufe: {stats.sales.toFixed(2)} €
+                      Kasseneinträge
                     </p>
                   </div>
-                </div>
-                <div className="text-right">
+                  </div>
+                  <div className="text-right">
                   <p className="text-2xl font-bold text-green-600">
-                    {(stats.entries + stats.sales).toFixed(2)} €
+                    {stats.entries.toFixed(2)} €
                   </p>
                   <p className="text-xs text-gray-500">Gesamt</p>
-                </div>
+                  </div>
               </div>
             ))}
             {Object.keys(sellerStats).length === 0 && (
@@ -254,25 +229,9 @@ export default function Kasse() {
                         {activity.note && ` - ${activity.note}`}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <p className={`text-lg font-bold ${activity.amount >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                        {activity.amount >= 0 ? '+' : ''}{activity.amount.toFixed(2)} €
-                      </p>
-                      {isAdmin && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm('Diesen Eintrag wirklich löschen?')) {
-                              deleteEntryMutation.mutate(activity.id);
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-100 h-8 w-8 p-0"
-                        >
-                          ✕
-                        </Button>
-                      )}
-                    </div>
+                    <p className={`text-lg font-bold ${activity.amount >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                      {activity.amount >= 0 ? '+' : ''}{activity.amount.toFixed(2)} €
+                    </p>
                   </div>
                 );
               } else {
