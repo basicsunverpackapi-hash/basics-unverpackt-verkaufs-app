@@ -22,9 +22,7 @@ export default function Bearbeiten() {
   });
   const [priceMode, setPriceMode] = useState('gram'); // 'gram' oder 'kg'
   const [uploading, setUploading] = useState(false);
-  const [sellerDialogOpen, setSellerDialogOpen] = useState(false);
-  const [editingSeller, setEditingSeller] = useState(null);
-  const [sellerFormData, setSellerFormData] = useState({ name: '', pin: '', is_admin: false });
+
   const [currentSeller, setCurrentSeller] = useState(null);
 
   const queryClient = useQueryClient();
@@ -42,10 +40,7 @@ export default function Bearbeiten() {
     queryFn: () => offlineClient.entities.Product.list('-created_date', 100)
   });
 
-  const { data: sellers = [] } = useQuery({
-    queryKey: ['sellers'],
-    queryFn: () => offlineClient.entities.Seller.list('name', 100)
-  });
+
 
   const createProductMutation = useMutation({
     mutationFn: (data) => offlineClient.entities.Product.create(data),
@@ -194,20 +189,7 @@ export default function Bearbeiten() {
     }
   };
 
-  const openSellerDialog = (seller = null) => {
-    if (seller) {
-      setEditingSeller(seller);
-      setSellerFormData({
-        name: seller.name,
-        pin: seller.pin,
-        is_admin: seller.is_admin || false
-      });
-    } else {
-      setEditingSeller(null);
-      setSellerFormData({ name: '', pin: '', is_admin: false });
-    }
-    setSellerDialogOpen(true);
-  };
+
 
   const isAdmin = currentSeller?.is_admin || false;
 

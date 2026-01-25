@@ -4,17 +4,14 @@ import { offlineClient } from '@/components/offlineClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { User, Lock } from 'lucide-react';
+import { User } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 
 export default function Auth() {
-  const [selectedSeller, setSelectedSeller] = useState(null);
-  const [pin, setPin] = useState('');
   const [showCreateSeller, setShowCreateSeller] = useState(false);
   const [newSellerName, setNewSellerName] = useState('');
-  const [newSellerPin, setNewSellerPin] = useState('');
   const navigate = useNavigate();
 
   const { data: sellers = [] } = useQuery({
@@ -22,51 +19,11 @@ export default function Auth() {
     queryFn: () => offlineClient.entities.Seller.list('name', 100)
   });
 
-  const handleLogin = () => {
-    if (!selectedSeller) {
-      toast.error('Bitte wählen Sie einen Verkäufer aus');
-      return;
-    }
-
-    if (pin.length !== 4) {
-      toast.error('PIN muss 4-stellig sein');
-      return;
-    }
-
-    if (pin === selectedSeller.pin) {
-      localStorage.setItem('currentSeller', JSON.stringify(selectedSeller));
-      toast.success(`Willkommen, ${selectedSeller.name}!`);
-      navigate(createPageUrl('Produkte'));
-      window.location.reload();
-    } else {
-      toast.error('❌ PIN ist falsch! Bitte erneut versuchen.');
-      setPin('');
-    }
-  };
-
-  const handlePinInput = (value) => {
-    if (value.length <= 4 && /^\d*$/.test(value)) {
-      setPin(value);
-      // Automatisches Anmelden nach vollständiger PIN-Eingabe
-      if (value.length === 4 && selectedSeller) {
-        if (value === selectedSeller.pin) {
-          try {
-            localStorage.setItem('currentSeller', JSON.stringify(selectedSeller));
-            toast.success(`Willkommen, ${selectedSeller.name}!`);
-            navigate(createPageUrl('Produkte'));
-            window.location.reload();
-          } catch (error) {
-            console.error('Fehler beim Speichern des Verkäufers:', error);
-            toast.error('Fehler beim Anmelden');
-          }
-        } else {
-          setTimeout(() => {
-            toast.error('❌ PIN ist falsch! Bitte erneut versuchen.');
-            setPin('');
-          }, 200);
-        }
-      }
-    }
+  const handleSelectSeller = (seller) => {
+    localStorage.setItem('currentSeller', JSON.stringify(seller));
+    toast.success(`Willkommen, ${seller.name}!`);
+    navigate(createPageUrl('Produkte'));
+    window.location.reload();
   };
 
   const handleCreateSeller = async () => {
@@ -74,16 +31,10 @@ export default function Auth() {
       toast.error('Bitte geben Sie einen Namen ein');
       return;
     }
-    if (newSellerPin.length !== 4) {
-      toast.error('PIN muss 4-stellig sein');
-      return;
-    }
 
     try {
       const newSeller = await offlineClient.entities.Seller.create({
-        name: newSellerName.trim(),
-        pin: newSellerPin,
-        is_admin: true // Erster Verkäufer ist immer Admin
+        name: newSellerName.trim()
       });
       
       toast.success('Verkäufer erfolgreich erstellt!');
@@ -143,24 +94,6 @@ export default function Auth() {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">4-stellige PIN</label>
-                <Input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
-                  value={newSellerPin}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (/^\d*$/.test(value)) {
-                      setNewSellerPin(value);
-                    }
-                  }}
-                  placeholder="••••"
-                  className="text-center text-2xl tracking-widest h-12"
-                />
-              </div>
-
               <div className="flex gap-3 pt-4">
                 {sellers.length > 0 && (
                   <Button
@@ -168,7 +101,6 @@ export default function Auth() {
                     onClick={() => {
                       setShowCreateSeller(false);
                       setNewSellerName('');
-                      setNewSellerPin('');
                     }}
                     className="flex-1"
                   >
@@ -177,7 +109,7 @@ export default function Auth() {
                 )}
                 <Button
                   onClick={handleCreateSeller}
-                  disabled={!newSellerName.trim() || newSellerPin.length !== 4}
+                  disabled={!newSellerName.trim()}
                   className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                 >
                   Verkäufer erstellen
@@ -193,7 +125,7 @@ export default function Auth() {
               {sellers.map((seller) => (
                 <Button
                   key={seller.id}
-                  onClick={() => setSelectedSeller(seller)}
+                  onClick={() => handleSelectSeller(seller)}
                   variant="outline"
                   className="w-full h-14 text-lg hover:bg-green-50 hover:border-green-500 transition-all"
                 >
@@ -207,52 +139,6 @@ export default function Auth() {
               >
                 + Neuen Verkäufer hinzufügen
               </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <User className="w-10 h-10 text-green-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900">{selectedSeller.name}</h3>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 text-gray-700 mb-2">
-                  <Lock className="w-4 h-4" />
-                  <span className="font-medium">PIN eingeben</span>
-                </div>
-                <Input
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
-                  value={pin}
-                  onChange={(e) => handlePinInput(e.target.value)}
-                  placeholder="••••"
-                  className="text-center text-2xl tracking-widest h-14"
-                  autoFocus
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSelectedSeller(null);
-                    setPin('');
-                  }}
-                  className="flex-1"
-                >
-                  Zurück
-                </Button>
-                <Button
-                  onClick={handleLogin}
-                  disabled={pin.length !== 4}
-                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                >
-                  Anmelden
-                </Button>
-              </div>
             </div>
           )}
         </CardContent>
