@@ -116,7 +116,7 @@ export default function Auth() {
                 </Button>
               </div>
             </div>
-          ) : !selectedSeller ? (
+          ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-gray-700 mb-4">
                 <User className="w-5 h-5" />
