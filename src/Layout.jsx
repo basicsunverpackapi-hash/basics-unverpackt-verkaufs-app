@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { Package, ShoppingCart, BarChart3, ClipboardList, Settings, LogOut, User as UserIcon, Wallet } from 'lucide-react';
 import { offlineClient } from '@/components/offlineClient';
+import { registerServiceWorker } from '@/components/registerServiceWorker';
 
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -18,6 +19,11 @@ export default function Layout({ children, currentPageName }) {
     queryKey: ['shoppingList'],
     queryFn: () => offlineClient.entities.ShoppingList.list()
   });
+
+  // Service Worker registrieren
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   // Check if user is logged in + Initial Data Load
   useEffect(() => {
