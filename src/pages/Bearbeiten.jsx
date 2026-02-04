@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Plus, Pencil, Trash2, Package, Upload, User } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,11 +24,21 @@ export default function Bearbeiten() {
   const [priceMode, setPriceMode] = useState('gram'); // 'gram' oder 'kg'
   const [uploading, setUploading] = useState(false);
 
+  // Verkäufer-State
+  const [sellerDialogOpen, setSellerDialogOpen] = useState(false);
+  const [editingSeller, setEditingSeller] = useState(null);
+  const [sellerName, setSellerName] = useState('');
+
   const queryClient = useQueryClient();
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
     queryFn: () => offlineClient.entities.Product.list('-created_date', 100)
+  });
+
+  const { data: sellers = [] } = useQuery({
+    queryKey: ['sellers'],
+    queryFn: () => offlineClient.entities.Seller.list('-created_date', 100)
   });
 
 
@@ -55,6 +66,32 @@ export default function Bearbeiten() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Produkt gelöscht');
+    }
+  });
+
+  const createSellerMutation = useMutation({
+    mutationFn: (data) => offlineClient.entities.Seller.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sellers'] });
+      toast.success('Verkäufer erstellt');
+      closeSellerDialog();
+    }
+  });
+
+  const updateSellerMutation = useMutation({
+    mutationFn: ({ id, data }) => offlineClient.entities.Seller.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sellers'] });
+      toast.success('Verkäufer aktualisiert');
+      closeSellerDialog();
+    }
+  });
+
+  const deleteSellerMutation = useMutation({
+    mutationFn: (id) => offlineClient.entities.Seller.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sellers'] });
+      toast.success('Verkäufer gelöscht');
     }
   });
 
@@ -92,6 +129,34 @@ export default function Bearbeiten() {
   const closeDialog = () => {
     setDialogOpen(false);
     setEditingProduct(null);
+  };
+
+  const openSellerDialog = (seller = null) => {
+    if (seller) {
+      setEditingSeller(seller);
+      setSellerName(seller.name || '');
+    } else {
+      setEditingSeller(null);
+      setSellerName('');
+    }
+    setSellerDialogOpen(true);
+  };
+
+  const closeSellerDialog = () => {
+    setSellerDialogOpen(false);
+    setEditingSeller(null);
+    setSellerName('');
+  };
+
+  const handleSellerSubmit = (e) => {
+    e.preventDefault();
+    const data = { name: sellerName };
+    
+    if (editingSeller) {
+      updateSellerMutation.mutate({ id: editingSeller.id, data });
+    } else {
+      createSellerMutation.mutate(data);
+    }
   };
 
   const handleImageUpload = async (e) => {
@@ -142,21 +207,35 @@ export default function Bearbeiten() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold">Produkte bearbeiten</h2>
-          <p className="text-amber-100 mt-2">Produkte verwalten und erstellen</p>
-        </div>
-        <Button onClick={() => openDialog()} className="bg-white text-amber-700 hover:bg-amber-50 font-bold shadow-lg rounded-xl px-6 py-3">
-          <Plus className="w-5 h-5 mr-2" />
-          Neues Produkt
-        </Button>
-      </div>
+      <Tabs defaultValue="products" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="products" className="text-base">
+            <Package className="w-4 h-4 mr-2" />
+            Produkte
+          </TabsTrigger>
+          <TabsTrigger value="sellers" className="text-base">
+            <User className="w-4 h-4 mr-2" />
+            Verkäufer
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Produkte Tab */}
+        <TabsContent value="products" className="space-y-6">
+          <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center">
+            <div>
+              <h2 className="text-3xl font-bold">Produkte bearbeiten</h2>
+              <p className="text-amber-100 mt-2">Produkte verwalten und erstellen</p>
+            </div>
+            <Button onClick={() => openDialog()} className="bg-white text-amber-700 hover:bg-amber-50 font-bold shadow-lg rounded-xl px-6 py-3">
+              <Plus className="w-5 h-5 mr-2" />
+              Neues Produkt
+            </Button>
+          </div>
 
 
 
-      {/* Products List */}
-      <div className="grid gap-4">
+          {/* Products List */}
+          <div className="grid gap-4">
         {products.map((product) => (
           <Card key={product.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
@@ -215,14 +294,114 @@ export default function Bearbeiten() {
           </Card>
         ))}
 
-        {products.length === 0 && (
-          <Card className="p-12 text-center">
-            <Package className="w-16 h-16 mx-auto mb-3 text-gray-300" />
-            <p className="text-gray-500">Keine Produkte vorhanden</p>
-            <p className="text-sm text-gray-400 mt-1">Erstelle dein erstes Produkt</p>
-          </Card>
-        )}
-      </div>
+            {products.length === 0 && (
+              <Card className="p-12 text-center">
+                <Package className="w-16 h-16 mx-auto mb-3 text-gray-300" />
+                <p className="text-gray-500">Keine Produkte vorhanden</p>
+                <p className="text-sm text-gray-400 mt-1">Erstelle dein erstes Produkt</p>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Verkäufer Tab */}
+        <TabsContent value="sellers" className="space-y-6">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center">
+            <div>
+              <h2 className="text-3xl font-bold">Verkäufer bearbeiten</h2>
+              <p className="text-blue-100 mt-2">Verkäufer verwalten und erstellen</p>
+            </div>
+            <Button onClick={() => openSellerDialog()} className="bg-white text-blue-700 hover:bg-blue-50 font-bold shadow-lg rounded-xl px-6 py-3">
+              <Plus className="w-5 h-5 mr-2" />
+              Neuer Verkäufer
+            </Button>
+          </div>
+
+          {/* Sellers List */}
+          <div className="grid gap-4">
+            {sellers.map((seller) => (
+              <Card key={seller.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="w-8 h-8 text-blue-600" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg">{seller.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        Erstellt am {new Date(seller.created_date).toLocaleDateString('de-DE')}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2 flex-shrink-0">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => openSellerDialog(seller)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          if (confirm('Verkäufer wirklich löschen?')) {
+                            deleteSellerMutation.mutate(seller.id);
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            {sellers.length === 0 && (
+              <Card className="p-12 text-center">
+                <User className="w-16 h-16 mx-auto mb-3 text-gray-300" />
+                <p className="text-gray-500">Keine Verkäufer vorhanden</p>
+                <p className="text-sm text-gray-400 mt-1">Erstelle den ersten Verkäufer</p>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Seller Dialog */}
+      <Dialog open={sellerDialogOpen} onOpenChange={setSellerDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {editingSeller ? 'Verkäufer bearbeiten' : 'Neuer Verkäufer'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSellerSubmit} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Name *</label>
+              <Input
+                value={sellerName}
+                onChange={(e) => setSellerName(e.target.value)}
+                placeholder="Name des Verkäufers"
+                required
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button type="button" variant="outline" onClick={closeSellerDialog} className="flex-1">
+                Abbrechen
+              </Button>
+              <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                {editingSeller ? 'Speichern' : 'Erstellen'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Product Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
