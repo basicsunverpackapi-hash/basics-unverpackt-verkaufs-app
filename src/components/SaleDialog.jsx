@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, Banknote, Coins, CreditCard } from 'lucide-react';
+import { ArrowRight, Banknote, Coins, CreditCard, Bluetooth } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { sumupBluetooth } from '@/components/sumupBluetooth';
 
 export default function SaleDialog({ product, open, onClose, onComplete }) {
   const [step, setStep] = useState(1); // 1 = Gewicht/Betrag, 2 = Zahlungsmethode, 3 = Bezahlung
@@ -14,6 +15,7 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
   const [paymentMethod, setPaymentMethod] = useState('Bargeld');
   const [receivedMoney, setReceivedMoney] = useState('');
   const [isSumUpProcessing, setIsSumUpProcessing] = useState(false);
+  const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
 
   if (!product) return null;
 
@@ -91,17 +93,39 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
     }
   };
 
+  const handleConnectBluetooth = async () => {
+    if (!sumupBluetooth.isSupported()) {
+      toast.error('Bluetooth wird von diesem Browser nicht unterstützt');
+      return;
+    }
+
+    setIsSumUpProcessing(true);
+    try {
+      await sumupBluetooth.connect();
+      setIsBluetoothConnected(true);
+      toast.success('Mit SumUp-Terminal verbunden: ' + sumupBluetooth.getDeviceName());
+    } catch (error) {
+      console.error('Bluetooth-Verbindungsfehler:', error);
+      toast.error('Verbindung fehlgeschlagen: ' + error.message);
+    } finally {
+      setIsSumUpProcessing(false);
+    }
+  };
+
   const handlePaymentMethodNext = async () => {
     if (paymentMethod === 'SumUp') {
-      // SumUp-Zahlung verarbeiten
+      // Prüfen ob Bluetooth verbunden ist
+      if (!sumupBluetooth.isConnected()) {
+        toast.error('Bitte zuerst mit SumUp-Terminal verbinden');
+        return;
+      }
+
+      // SumUp Bluetooth-Zahlung verarbeiten
       setIsSumUpProcessing(true);
       try {
-        const response = await base44.functions.invoke('sumupCheckout', {
-          amount: totalPrice.toFixed(2),
-          description: `${product.name} - ${(weightKg * 1000).toFixed(0)}g`
-        });
-
-        if (response.data.success) {
+        const result = await sumupBluetooth.initiatePayment(totalPrice);
+        
+        if (result.success) {
           toast.success('SumUp-Zahlung erfolgreich');
           handleComplete();
         } else {
@@ -273,7 +297,7 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
                   💳 Karte
                 </Button>
               </div>
-              <div className="mt-3">
+              <div className="mt-3 space-y-2">
                 <Button
                   type="button"
                   onClick={() => setPaymentMethod('SumUp')}
@@ -283,6 +307,24 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
                   <CreditCard className="w-5 h-5 mr-2" />
                   SumUp Terminal
                 </Button>
+                {paymentMethod === 'SumUp' && !isBluetoothConnected && (
+                  <Button
+                    type="button"
+                    onClick={handleConnectBluetooth}
+                    disabled={isSumUpProcessing}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Bluetooth className="w-4 h-4 mr-2" />
+                    {isSumUpProcessing ? 'Verbinde...' : 'Mit Terminal verbinden'}
+                  </Button>
+                )}
+                {paymentMethod === 'SumUp' && isBluetoothConnected && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-lg">
+                    <Bluetooth className="w-4 h-4" />
+                    <span>Verbunden: {sumupBluetooth.getDeviceName()}</span>
+                  </div>
+                )}
               </div>
             </div>
 
