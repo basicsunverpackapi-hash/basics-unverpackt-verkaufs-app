@@ -3,7 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, Banknote, Coins } from 'lucide-react';
+import { ArrowRight, Banknote, Coins, CreditCard } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
 export default function SaleDialog({ product, open, onClose, onComplete }) {
   const [step, setStep] = useState(1); // 1 = Gewicht/Betrag, 2 = Zahlungsmethode, 3 = Bezahlung
@@ -11,6 +13,7 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
   const [inputValue, setInputValue] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Bargeld');
   const [receivedMoney, setReceivedMoney] = useState('');
+  const [isSumUpProcessing, setIsSumUpProcessing] = useState(false);
 
   if (!product) return null;
 
@@ -88,8 +91,29 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
     }
   };
 
-  const handlePaymentMethodNext = () => {
-    if (paymentMethod === 'Karte') {
+  const handlePaymentMethodNext = async () => {
+    if (paymentMethod === 'SumUp') {
+      // SumUp-Zahlung verarbeiten
+      setIsSumUpProcessing(true);
+      try {
+        const response = await base44.functions.invoke('sumupCheckout', {
+          amount: totalPrice.toFixed(2),
+          description: `${product.name} - ${(weightKg * 1000).toFixed(0)}g`
+        });
+
+        if (response.data.success) {
+          toast.success('SumUp-Zahlung erfolgreich');
+          handleComplete();
+        } else {
+          toast.error('SumUp-Zahlung fehlgeschlagen');
+        }
+      } catch (error) {
+        console.error('SumUp Error:', error);
+        toast.error('SumUp-Zahlung fehlgeschlagen: ' + error.message);
+      } finally {
+        setIsSumUpProcessing(false);
+      }
+    } else if (paymentMethod === 'Karte') {
       handleComplete(); // Bei Kartenzahlung direkt abschließen
     } else {
       setStep(3); // Bei Bargeld zu Schritt 3 (Rückgeld)
@@ -249,6 +273,17 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
                   💳 Karte
                 </Button>
               </div>
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  onClick={() => setPaymentMethod('SumUp')}
+                  variant={paymentMethod === 'SumUp' ? 'default' : 'outline'}
+                  className={`w-full h-16 text-lg ${paymentMethod === 'SumUp' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                >
+                  <CreditCard className="w-5 h-5 mr-2" />
+                  SumUp Terminal
+                </Button>
+              </div>
             </div>
 
             {/* Actions */}
@@ -258,9 +293,10 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
               </Button>
               <Button 
                 onClick={handlePaymentMethodNext}
-                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                disabled={isSumUpProcessing}
+                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
               >
-                {paymentMethod === 'Karte' ? 'Bezahlen' : 'Weiter'} <ArrowRight className="w-4 h-4 ml-2" />
+                {isSumUpProcessing ? 'Verarbeite...' : paymentMethod === 'Karte' || paymentMethod === 'SumUp' ? 'Bezahlen' : 'Weiter'} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
