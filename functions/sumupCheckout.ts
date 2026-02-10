@@ -16,8 +16,14 @@ Deno.serve(async (req) => {
     }
 
     const apiKey = Deno.env.get('SUMUP_API_KEY');
+    const merchantEmail = Deno.env.get('SUMUP_MERCHANT_EMAIL');
+    
     if (!apiKey) {
       return Response.json({ error: 'SumUp API key not configured' }, { status: 500 });
+    }
+    
+    if (!merchantEmail) {
+      return Response.json({ error: 'SumUp Merchant Email not configured' }, { status: 500 });
     }
 
     // SumUp Checkout erstellen
@@ -31,8 +37,8 @@ Deno.serve(async (req) => {
         checkout_reference: `sale_${Date.now()}`,
         amount: parseFloat(amount).toFixed(2),
         currency: 'EUR',
-        description: description || 'Verkauf',
-        merchant_code: 'YOUR_MERCHANT_CODE' // Optional: Falls Sie einen Merchant Code haben
+        pay_to_email: merchantEmail,
+        description: description || 'Verkauf'
       })
     });
 
