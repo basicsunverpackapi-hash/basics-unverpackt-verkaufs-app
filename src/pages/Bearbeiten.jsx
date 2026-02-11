@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { offlineClient } from '@/components/offlineClient';
 import { base44 } from '@/api/base44Client';
-import AccountDeletion from '../components/AccountDeletion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -222,12 +221,12 @@ export default function Bearbeiten() {
 
         {/* Produkte Tab */}
         <TabsContent value="products" className="space-y-6">
-          <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center">
+          <div className="bg-gradient-to-r from-amber-600 to-orange-600 dark:from-amber-700 dark:to-orange-700 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center">
             <div>
               <h2 className="text-3xl font-bold">Produkte bearbeiten</h2>
-              <p className="text-amber-100 mt-2">Produkte verwalten und erstellen</p>
+              <p className="text-amber-100 dark:text-amber-200 mt-2">Produkte verwalten und erstellen</p>
             </div>
-            <Button onClick={() => openDialog()} className="bg-white text-amber-700 hover:bg-amber-50 font-bold shadow-lg rounded-xl px-6 py-3">
+            <Button onClick={() => openDialog()} className="bg-white dark:bg-slate-100 text-amber-700 hover:bg-amber-50 dark:hover:bg-slate-200 font-bold shadow-lg rounded-xl px-6 py-3">
               <Plus className="w-5 h-5 mr-2" />
               Neues Produkt
             </Button>
@@ -238,14 +237,14 @@ export default function Bearbeiten() {
           {/* Products List */}
           <div className="grid gap-4">
         {products.map((product) => (
-          <Card key={product.id} className="hover:shadow-md transition-shadow">
+          <Card key={product.id} className="hover:shadow-md transition-shadow dark:bg-slate-800 dark:border-slate-700">
             <CardContent className="p-6">
               <div className="flex items-center gap-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
                   {product.image_url ? (
                     <img src={product.image_url} alt={product.name} className="w-full h-full object-cover rounded-lg" />
                   ) : (
-                    <span className="text-2xl font-bold text-green-600">
+                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                       {product.name?.[0]?.toUpperCase()}
                     </span>
                   )}
@@ -254,15 +253,15 @@ export default function Bearbeiten() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h3 className="font-semibold text-lg">{product.name}</h3>
+                      <h3 className="font-semibold text-lg dark:text-white">{product.name}</h3>
                       {product.purchase_price_per_kg && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                           EK: {product.purchase_price_per_kg.toFixed(2)} €/kg
                         </p>
                       )}
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-green-600">
+                      <p className="text-lg font-bold text-green-600 dark:text-green-400">
                         {product.price_per_unit?.toFixed(2)} € / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
                       </p>
                     </div>
@@ -274,8 +273,9 @@ export default function Bearbeiten() {
                     variant="outline"
                     size="icon"
                     onClick={() => openDialog(product)}
+                    className="no-select"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="w-4 h-4 no-select" />
                   </Button>
                   <Button
                     variant="outline"
@@ -285,9 +285,9 @@ export default function Bearbeiten() {
                         deleteProductMutation.mutate(product.id);
                       }
                     }}
-                    className="text-red-500 hover:text-red-700"
+                    className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 no-select"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 no-select" />
                   </Button>
                 </div>
               </div>
@@ -296,10 +296,10 @@ export default function Bearbeiten() {
         ))}
 
             {products.length === 0 && (
-              <Card className="p-12 text-center">
-                <Package className="w-16 h-16 mx-auto mb-3 text-gray-300" />
-                <p className="text-gray-500">Keine Produkte vorhanden</p>
-                <p className="text-sm text-gray-400 mt-1">Erstelle dein erstes Produkt</p>
+              <Card className="p-12 text-center dark:bg-slate-800 dark:border-slate-700">
+                <Package className="w-16 h-16 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-gray-500 dark:text-gray-400">Keine Produkte vorhanden</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Erstelle dein erstes Produkt</p>
               </Card>
             )}
           </div>
@@ -307,12 +307,12 @@ export default function Bearbeiten() {
 
         {/* Verkäufer Tab */}
         <TabsContent value="sellers" className="space-y-6">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 rounded-2xl p-6 shadow-lg text-white flex justify-between items-center">
             <div>
               <h2 className="text-3xl font-bold">Verkäufer bearbeiten</h2>
-              <p className="text-blue-100 mt-2">Verkäufer verwalten und erstellen</p>
+              <p className="text-blue-100 dark:text-blue-200 mt-2">Verkäufer verwalten und erstellen</p>
             </div>
-            <Button onClick={() => openSellerDialog()} className="bg-white text-blue-700 hover:bg-blue-50 font-bold shadow-lg rounded-xl px-6 py-3">
+            <Button onClick={() => openSellerDialog()} className="bg-white dark:bg-slate-100 text-blue-700 hover:bg-blue-50 dark:hover:bg-slate-200 font-bold shadow-lg rounded-xl px-6 py-3">
               <Plus className="w-5 h-5 mr-2" />
               Neuer Verkäufer
             </Button>
@@ -321,16 +321,16 @@ export default function Bearbeiten() {
           {/* Sellers List */}
           <div className="grid gap-4">
             {sellers.map((seller) => (
-              <Card key={seller.id} className="hover:shadow-md transition-shadow">
+              <Card key={seller.id} className="hover:shadow-md transition-shadow dark:bg-slate-800 dark:border-slate-700">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <User className="w-8 h-8 text-blue-600" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-lg">{seller.name}</h3>
-                      <p className="text-sm text-gray-500">
+                      <h3 className="font-semibold text-lg dark:text-white">{seller.name}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         Erstellt am {new Date(seller.created_date).toLocaleDateString('de-DE')}
                       </p>
                     </div>
@@ -340,20 +340,21 @@ export default function Bearbeiten() {
                         variant="outline"
                         size="icon"
                         onClick={() => openSellerDialog(seller)}
+                        className="no-select"
                       >
-                        <Pencil className="w-4 h-4" />
+                        <Pencil className="w-4 h-4 no-select" />
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => {
-                          if (confirm('Verkäufer wirklich löschen?')) {
+                          if (confirm('Verkäufer wirklich löschen? Dies löscht auch alle zugehörigen Daten (Verkäufe, Kasse, etc.).')) {
                             deleteSellerMutation.mutate(seller.id);
                           }
                         }}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 no-select"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4 no-select" />
                       </Button>
                     </div>
                   </div>
@@ -362,10 +363,10 @@ export default function Bearbeiten() {
             ))}
 
             {sellers.length === 0 && (
-              <Card className="p-12 text-center">
-                <User className="w-16 h-16 mx-auto mb-3 text-gray-300" />
-                <p className="text-gray-500">Keine Verkäufer vorhanden</p>
-                <p className="text-sm text-gray-400 mt-1">Erstelle den ersten Verkäufer</p>
+              <Card className="p-12 text-center dark:bg-slate-800 dark:border-slate-700">
+                <User className="w-16 h-16 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
+                <p className="text-gray-500 dark:text-gray-400">Keine Verkäufer vorhanden</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Erstelle den ersten Verkäufer</p>
               </Card>
             )}
           </div>
@@ -541,10 +542,7 @@ export default function Bearbeiten() {
         </DialogContent>
       </Dialog>
 
-      {/* Account Deletion Section */}
-      <div className="mt-8">
-        <AccountDeletion />
-      </div>
+
     </div>
   );
 }
