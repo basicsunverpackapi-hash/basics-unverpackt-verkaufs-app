@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { offlineClient } from '@/components/offlineClient';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Calendar, Package, XCircle, User } from 'lucide-react';
+import { ShoppingCart, Calendar, Package, XCircle, User, RefreshCw } from 'lucide-react';
 import { format, isToday, isYesterday, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 export default function Verkäufe() {
   const queryClient = useQueryClient();
   const [currentSeller, setCurrentSeller] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const startY = useRef(0);
+  const pullDistance = useRef(0);
 
   useEffect(() => {
     const seller = localStorage.getItem('currentSeller');
@@ -42,6 +46,34 @@ export default function Verkäufe() {
     }
   });
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['sales'] });
+    setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
+  const handleTouchStart = (e) => {
+    if (window.scrollY === 0) {
+      startY.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (window.scrollY === 0 && startY.current > 0) {
+      const currentY = e.touches[0].clientY;
+      pullDistance.current = Math.max(0, currentY - startY.current);
+      
+      if (pullDistance.current > 80 && !isRefreshing) {
+        handleRefresh();
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    startY.current = 0;
+    pullDistance.current = 0;
+  };
+
   const handleCancel = (sale) => {
     if (confirm('Verkauf wirklich stornieren?')) {
       deleteSaleMutation.mutate(sale.id);
@@ -49,25 +81,34 @@ export default function Verkäufe() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-6 shadow-lg text-white">
+    <div className="space-y-6" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+      <div className="bg-gradient-to-r from-blue-600 to-cyan-600 dark:from-blue-700 dark:to-cyan-700 rounded-2xl p-6 shadow-lg text-white relative overflow-hidden">
+        {isRefreshing && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute top-2 right-2"
+          >
+            <RefreshCw className="w-6 h-6 animate-spin" />
+          </motion.div>
+        )}
         <h2 className="text-3xl font-bold">Verkäufe</h2>
       </div>
 
       {isLoading ? (
         <div className="space-y-4">
           {Array(5).fill(0).map((_, i) => (
-            <Card key={i}>
+            <Card key={i} className="dark:bg-slate-800 dark:border-slate-700">
               <CardContent className="p-6">
-                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full dark:bg-slate-700" />
               </CardContent>
             </Card>
           ))}
         </div>
       ) : sales.length === 0 ? (
-        <Card className="p-12 text-center">
-          <ShoppingCart className="w-16 h-16 mx-auto mb-3 text-gray-300" />
-          <p className="text-gray-500">Noch keine Verkäufe vorhanden</p>
+        <Card className="p-12 text-center dark:bg-slate-800 dark:border-slate-700">
+          <ShoppingCart className="w-16 h-16 mx-auto mb-3 text-gray-300 dark:text-gray-600 select-none" />
+          <p className="text-gray-500 dark:text-gray-400">Noch keine Verkäufe vorhanden</p>
         </Card>
       ) : (
         <div className="space-y-6">
@@ -98,39 +139,39 @@ export default function Verkäufe() {
                 return (
                   <div key={dayKey} className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 h-px bg-gradient-to-r from-green-200 via-green-400 to-green-200"></div>
-                      <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-full border border-green-200">
-                        <Calendar className="w-4 h-4 text-green-600" />
-                        <span className="font-semibold text-green-900">{dateLabel}</span>
+                      <div className="flex-1 h-px bg-gradient-to-r from-green-200 via-green-400 to-green-200 dark:from-green-800 dark:via-green-700 dark:to-green-800"></div>
+                      <div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-900/30 rounded-full border border-green-200 dark:border-green-700">
+                        <Calendar className="w-4 h-4 text-green-600 dark:text-green-400 select-none" />
+                        <span className="font-semibold text-green-900 dark:text-green-300">{dateLabel}</span>
                       </div>
-                      <div className="flex-1 h-px bg-gradient-to-r from-green-200 via-green-400 to-green-200"></div>
+                      <div className="flex-1 h-px bg-gradient-to-r from-green-200 via-green-400 to-green-200 dark:from-green-800 dark:via-green-700 dark:to-green-800"></div>
                     </div>
 
                     <div className="space-y-3">
                       {daySales.map((sale) => (
-                        <Card key={sale.id} className="hover:shadow-md transition-shadow">
+                        <Card key={sale.id} className="hover:shadow-md dark:hover:shadow-green-900/20 transition-shadow dark:bg-slate-800 dark:border-slate-700">
                           <CardContent className="p-6">
                             <div className="flex items-start justify-between mb-4">
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                                  <ShoppingCart className="w-6 h-6 text-green-600" />
+                                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                                  <ShoppingCart className="w-6 h-6 text-green-600 dark:text-green-400 select-none" />
                                 </div>
                                 <div>
                                   <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-medium text-gray-700">
+                                    <span className="font-medium text-gray-700 dark:text-gray-300">
                                       {format(new Date(sale.date), 'HH:mm', { locale: de })} Uhr
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <Badge variant="outline" className={sale.payment_method === 'Karte' ? 'bg-blue-50 text-blue-700 border-blue-300' : ''}>
+                                    <Badge variant="outline" className={sale.payment_method === 'Karte' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700' : 'dark:bg-slate-700 dark:text-gray-300 dark:border-slate-600'}>
                                       {sale.payment_method === 'Karte' ? '💳 Karte' : '💵 Bar'}
                                     </Badge>
-                                    <span className="text-sm text-gray-500">
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">
                                       {sale.items?.length || 0} Artikel
                                     </span>
                                     {sale.seller_name && (
-                                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                                        <User className="w-3 h-3" />
+                                      <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                                        <User className="w-3 h-3 select-none" />
                                         <span>{sale.seller_name}</span>
                                       </div>
                                     )}
@@ -139,7 +180,7 @@ export default function Verkäufe() {
                               </div>
                               <div className="flex items-center gap-3">
                                 <div className="text-right">
-                                  <div className="text-2xl font-bold text-green-600">
+                                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                                     {sale.total_amount?.toFixed(2)} €
                                   </div>
                                   </div>
@@ -148,28 +189,28 @@ export default function Verkäufe() {
                                     variant="outline"
                                     size="icon"
                                     onClick={() => handleCancel(sale)}
-                                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 select-none"
                                   >
-                                    <XCircle className="w-4 h-4" />
+                                    <XCircle className="w-4 h-4 select-none" />
                                   </Button>
                                   )}
                                   </div>
                             </div>
 
                             {/* Items */}
-                            <div className="border-t pt-4 space-y-2">
+                            <div className="border-t dark:border-slate-700 pt-4 space-y-2">
                               {sale.items?.map((item, index) => (
-                                <div key={index} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                                <div key={index} className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
                                   <div className="flex items-center gap-3">
-                                    <Package className="w-4 h-4 text-gray-400" />
+                                    <Package className="w-4 h-4 text-gray-400 dark:text-gray-500 select-none" />
                                     <div>
-                                      <span className="font-medium">{item.product_name}</span>
-                                      <span className="text-sm text-gray-500 ml-2">
+                                      <span className="font-medium dark:text-white">{item.product_name}</span>
+                                      <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
                                         {(item.weight_kg * 1000)?.toFixed(0)} g
                                       </span>
                                     </div>
                                   </div>
-                                  <span className="font-semibold text-green-600">
+                                  <span className="font-semibold text-green-600 dark:text-green-400">
                                     {item.total_price?.toFixed(2)} €
                                   </span>
                                 </div>
