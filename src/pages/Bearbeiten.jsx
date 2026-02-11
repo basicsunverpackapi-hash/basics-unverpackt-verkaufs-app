@@ -541,7 +541,10 @@ export default function Bearbeiten() {
         </DialogContent>
       </Dialog>
 
-
+      {/* Account Deletion Section */}
+      <div className="mt-8">
+        <AccountDeletion />
+      </div>
     </div>
   );
 }
