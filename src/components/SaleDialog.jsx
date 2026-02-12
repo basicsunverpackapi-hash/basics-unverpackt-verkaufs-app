@@ -3,8 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { ArrowRight, Banknote, Coins, CreditCard } from 'lucide-react';
+import { ArrowRight, Banknote, Coins, CreditCard, Bluetooth } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { sumupBluetooth } from '@/components/sumupBluetooth';
 
 export default function SaleDialog({ product, open, onClose, onComplete }) {
   const [step, setStep] = useState(1); // 1 = Gewicht/Betrag, 2 = Zahlungsmethode, 3 = Bezahlung
@@ -12,6 +14,8 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
   const [inputValue, setInputValue] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Bargeld');
   const [receivedMoney, setReceivedMoney] = useState('');
+  const [isSumUpProcessing, setIsSumUpProcessing] = useState(false);
+  const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
 
   if (!product) return null;
 
@@ -89,8 +93,51 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
     }
   };
 
+  const handleConnectBluetooth = async () => {
+    if (!sumupBluetooth.isSupported()) {
+      toast.error('Bluetooth wird von diesem Browser nicht unterstützt');
+      return;
+    }
+
+    setIsSumUpProcessing(true);
+    try {
+      await sumupBluetooth.connect();
+      setIsBluetoothConnected(true);
+      toast.success('Mit SumUp-Terminal verbunden: ' + sumupBluetooth.getDeviceName());
+    } catch (error) {
+      console.error('Bluetooth-Verbindungsfehler:', error);
+      toast.error('Verbindung fehlgeschlagen: ' + error.message);
+    } finally {
+      setIsSumUpProcessing(false);
+    }
+  };
+
   const handlePaymentMethodNext = async () => {
-    if (paymentMethod === 'Karte') {
+    if (paymentMethod === 'SumUp') {
+      // Prüfen ob Bluetooth verbunden ist
+      if (!sumupBluetooth.isConnected()) {
+        toast.error('Bitte zuerst mit SumUp-Terminal verbinden');
+        return;
+      }
+
+      // SumUp Bluetooth-Zahlung verarbeiten
+      setIsSumUpProcessing(true);
+      try {
+        const result = await sumupBluetooth.initiatePayment(totalPrice);
+        
+        if (result.success) {
+          toast.success('SumUp-Zahlung erfolgreich');
+          handleComplete();
+        } else {
+          toast.error('SumUp-Zahlung fehlgeschlagen');
+        }
+      } catch (error) {
+        console.error('SumUp Error:', error);
+        toast.error('SumUp-Zahlung fehlgeschlagen: ' + error.message);
+      } finally {
+        setIsSumUpProcessing(false);
+      }
+    } else if (paymentMethod === 'Karte') {
       handleComplete(); // Bei Kartenzahlung direkt abschließen
     } else {
       setStep(3); // Bei Bargeld zu Schritt 3 (Rückgeld)
@@ -250,6 +297,35 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
                   💳 Karte
                 </Button>
               </div>
+              <div className="mt-3 space-y-2">
+                <Button
+                  type="button"
+                  onClick={() => setPaymentMethod('SumUp')}
+                  variant={paymentMethod === 'SumUp' ? 'default' : 'outline'}
+                  className={`w-full h-16 text-lg ${paymentMethod === 'SumUp' ? 'bg-purple-600 hover:bg-purple-700' : ''}`}
+                >
+                  <CreditCard className="w-5 h-5 mr-2" />
+                  SumUp Terminal
+                </Button>
+                {paymentMethod === 'SumUp' && !isBluetoothConnected && (
+                  <Button
+                    type="button"
+                    onClick={handleConnectBluetooth}
+                    disabled={isSumUpProcessing}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Bluetooth className="w-4 h-4 mr-2" />
+                    {isSumUpProcessing ? 'Verbinde...' : 'Mit Terminal verbinden'}
+                  </Button>
+                )}
+                {paymentMethod === 'SumUp' && isBluetoothConnected && (
+                  <div className="flex items-center justify-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-lg">
+                    <Bluetooth className="w-4 h-4" />
+                    <span>Verbunden: {sumupBluetooth.getDeviceName()}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Actions */}
@@ -259,9 +335,10 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
               </Button>
               <Button 
                 onClick={handlePaymentMethodNext}
-                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                disabled={isSumUpProcessing}
+                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
               >
-                {paymentMethod === 'Karte' ? 'Bezahlen' : 'Weiter'} <ArrowRight className="w-4 h-4 ml-2" />
+                {isSumUpProcessing ? 'Verarbeite...' : paymentMethod === 'Karte' || paymentMethod === 'SumUp' ? 'Bezahlen' : 'Weiter'} <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
           </div>
