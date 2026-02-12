@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { offlineClient } from '@/components/offlineClient';
-import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -165,12 +164,20 @@ export default function Bearbeiten() {
 
     setUploading(true);
     try {
-      const result = await base44.integrations.Core.UploadFile({ file });
-      setFormData({ ...formData, image_url: result.file_url });
-      toast.success('Bild hochgeladen');
+      // Konvertiere zu Base64 für lokale Speicherung
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, image_url: reader.result });
+        toast.success('Bild gespeichert');
+        setUploading(false);
+      };
+      reader.onerror = () => {
+        toast.error('Bild-Upload fehlgeschlagen');
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       toast.error('Bild-Upload fehlgeschlagen');
-    } finally {
       setUploading(false);
     }
   };

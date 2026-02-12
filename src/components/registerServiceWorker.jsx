@@ -1,14 +1,5 @@
+
 export const registerServiceWorker = () => {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('/service-worker.js')
-        .then((registration) => {
-          console.log('Service Worker registriert:', registration.scope);
-        })
-        .catch((error) => {
-          console.error('Service Worker Registrierung fehlgeschlagen:', error);
-        });
-    });
-  }
+  // Service Worker deaktiviert - App läuft komplett offline ohne Service Worker
+  console.log('✅ App läuft im vollständigen Offline-Modus (nur localStorage)');
 };
