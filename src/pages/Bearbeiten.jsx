@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Pencil, Trash2, Package, Upload, User } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Upload, User, Download, FileUp, Database } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Bearbeiten() {
@@ -28,6 +28,10 @@ export default function Bearbeiten() {
   const [editingSeller, setEditingSeller] = useState(null);
   const [sellerName, setSellerName] = useState('');
 
+  // Backup State
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
   const queryClient = useQueryClient();
 
   const { data: products = [] } = useQuery({
@@ -38,6 +42,31 @@ export default function Bearbeiten() {
   const { data: sellers = [] } = useQuery({
     queryKey: ['sellers'],
     queryFn: () => offlineClient.entities.Seller.list('-created_date', 100)
+  });
+
+  const { data: sales = [] } = useQuery({
+    queryKey: ['sales'],
+    queryFn: () => offlineClient.entities.Sale.list('-created_date', 1000)
+  });
+
+  const { data: shoppingList = [] } = useQuery({
+    queryKey: ['shoppingList'],
+    queryFn: () => offlineClient.entities.ShoppingList.list()
+  });
+
+  const { data: debts = [] } = useQuery({
+    queryKey: ['debts'],
+    queryFn: () => offlineClient.entities.Debt.list()
+  });
+
+  const { data: cashRegister = [] } = useQuery({
+    queryKey: ['cashRegister'],
+    queryFn: () => offlineClient.entities.CashRegister.list('-created_date', 1000)
+  });
+
+  const { data: purchases = [] } = useQuery({
+    queryKey: ['purchases'],
+    queryFn: () => offlineClient.entities.Purchase.list('-created_date', 1000)
   });
 
 
@@ -182,6 +211,132 @@ export default function Bearbeiten() {
     }
   };
 
+  const handleExportData = () => {
+    setIsExporting(true);
+    try {
+      // Sammle alle Daten
+      const backup = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        data: {
+          products,
+          sellers,
+          sales,
+          shoppingList,
+          debts,
+          cashRegister,
+          purchases
+        }
+      };
+
+      // Erstelle Download
+      const dataStr = JSON.stringify(backup, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `basics-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Backup erfolgreich exportiert');
+    } catch (error) {
+      console.error('Export-Fehler:', error);
+      toast.error('Fehler beim Exportieren');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportData = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      const text = await file.text();
+      const backup = JSON.parse(text);
+
+      if (!backup.version || !backup.data) {
+        throw new Error('Ungültiges Backup-Format');
+      }
+
+      // Bestätigung
+      if (!confirm(`Möchten Sie wirklich ${Object.values(backup.data).flat().length} Datensätze importieren? Dies überschreibt NICHT vorhandene Daten, sondern fügt neue hinzu.`)) {
+        setIsImporting(false);
+        return;
+      }
+
+      // Importiere Daten
+      let imported = 0;
+      
+      if (backup.data.sellers?.length) {
+        await offlineClient.entities.Seller.bulkCreate(backup.data.sellers.map(s => ({
+          name: s.name
+        })));
+        imported += backup.data.sellers.length;
+      }
+      
+      if (backup.data.products?.length) {
+        await offlineClient.entities.Product.bulkCreate(backup.data.products.map(p => ({
+          name: p.name,
+          price_per_unit: p.price_per_unit,
+          unit_grams: p.unit_grams,
+          purchase_price_per_kg: p.purchase_price_per_kg,
+          image_url: p.image_url,
+          active: p.active
+        })));
+        imported += backup.data.products.length;
+      }
+
+      if (backup.data.sales?.length) {
+        await offlineClient.entities.Sale.bulkCreate(backup.data.sales.map(s => ({
+          date: s.date,
+          items: s.items,
+          total_amount: s.total_amount,
+          payment_method: s.payment_method,
+          seller_name: s.seller_name
+        })));
+        imported += backup.data.sales.length;
+      }
+
+      if (backup.data.shoppingList?.length) {
+        await offlineClient.entities.ShoppingList.bulkCreate(backup.data.shoppingList);
+        imported += backup.data.shoppingList.length;
+      }
+
+      if (backup.data.debts?.length) {
+        await offlineClient.entities.Debt.bulkCreate(backup.data.debts);
+        imported += backup.data.debts.length;
+      }
+
+      if (backup.data.cashRegister?.length) {
+        await offlineClient.entities.CashRegister.bulkCreate(backup.data.cashRegister);
+        imported += backup.data.cashRegister.length;
+      }
+
+      if (backup.data.purchases?.length) {
+        await offlineClient.entities.Purchase.bulkCreate(backup.data.purchases);
+        imported += backup.data.purchases.length;
+      }
+
+      // Cache invalidieren
+      queryClient.invalidateQueries();
+
+      toast.success(`${imported} Datensätze erfolgreich importiert!`);
+      
+      // Seite neu laden um alle Daten zu aktualisieren
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+      console.error('Import-Fehler:', error);
+      toast.error('Fehler beim Importieren: ' + error.message);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -215,7 +370,7 @@ export default function Bearbeiten() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="products" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="products" className="text-base">
             <Package className="w-4 h-4 mr-2" />
             Produkte
@@ -223,6 +378,10 @@ export default function Bearbeiten() {
           <TabsTrigger value="sellers" className="text-base">
             <User className="w-4 h-4 mr-2" />
             Verkäufer
+          </TabsTrigger>
+          <TabsTrigger value="backup" className="text-base">
+            <Database className="w-4 h-4 mr-2" />
+            Backup
           </TabsTrigger>
         </TabsList>
 
@@ -376,6 +535,125 @@ export default function Bearbeiten() {
                 <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Erstelle den ersten Verkäufer</p>
               </Card>
             )}
+          </div>
+        </TabsContent>
+
+        {/* Backup Tab */}
+        <TabsContent value="backup" className="space-y-6">
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-700 dark:to-pink-700 rounded-2xl p-6 shadow-lg text-white">
+            <div>
+              <h2 className="text-3xl font-bold">Datensicherung</h2>
+              <p className="text-purple-100 dark:text-purple-200 mt-2">Daten sichern und wiederherstellen</p>
+            </div>
+          </div>
+
+          <div className="grid gap-6">
+            {/* Export Card */}
+            <Card className="dark:bg-slate-800 dark:border-slate-700">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <Download className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold dark:text-white mb-2">Daten exportieren</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      Erstellen Sie eine Sicherungskopie aller Daten (Produkte, Verkäufe, Verkäufer, Kasse, etc.). 
+                      Die Datei wird als JSON heruntergeladen und kann später wiederhergestellt werden.
+                    </p>
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
+                        📊 Aktuelle Datenmenge:
+                      </p>
+                      <ul className="text-sm text-blue-700 dark:text-blue-400 mt-2 space-y-1">
+                        <li>• {products.length} Produkte</li>
+                        <li>• {sellers.length} Verkäufer</li>
+                        <li>• {sales.length} Verkäufe</li>
+                        <li>• {cashRegister.length} Kassen-Einträge</li>
+                        <li>• {purchases.length} Einkäufe</li>
+                        <li>• {debts.length} Schulden</li>
+                        <li>• {shoppingList.length} Merkzettel-Einträge</li>
+                      </ul>
+                    </div>
+                    <Button
+                      onClick={handleExportData}
+                      disabled={isExporting}
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      {isExporting ? 'Exportiere...' : 'Backup erstellen'}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Import Card */}
+            <Card className="dark:bg-slate-800 dark:border-slate-700">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                    <FileUp className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold dark:text-white mb-2">Daten importieren</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      Stellen Sie Daten aus einer Sicherungsdatei wieder her. Die importierten Daten werden zu den vorhandenen Daten hinzugefügt.
+                    </p>
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-amber-800 dark:text-amber-300 font-medium mb-1">
+                        ⚠️ Wichtige Hinweise:
+                      </p>
+                      <ul className="text-sm text-amber-700 dark:text-amber-400 space-y-1">
+                        <li>• Der Import fügt Daten hinzu (überschreibt nicht)</li>
+                        <li>• Nur JSON-Dateien aus dieser App verwenden</li>
+                        <li>• Großer Import kann einige Sekunden dauern</li>
+                      </ul>
+                    </div>
+                    <label>
+                      <Button
+                        disabled={isImporting}
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                        type="button"
+                        onClick={() => document.getElementById('import-file-input')?.click()}
+                      >
+                        <FileUp className="w-4 h-4 mr-2" />
+                        {isImporting ? 'Importiere...' : 'Backup hochladen'}
+                      </Button>
+                      <input
+                        id="import-file-input"
+                        type="file"
+                        accept=".json"
+                        onChange={handleImportData}
+                        className="hidden"
+                        disabled={isImporting}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Info Card */}
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-700">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Database className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-blue-900 dark:text-blue-300 mb-2">💡 Tipps für Datensicherung</h3>
+                    <ul className="text-sm text-blue-800 dark:text-blue-400 space-y-2">
+                      <li>✓ Erstellen Sie regelmäßig Backups (z.B. täglich oder wöchentlich)</li>
+                      <li>✓ Speichern Sie Backups an sicheren Orten (Cloud, USB-Stick, etc.)</li>
+                      <li>✓ Testen Sie gelegentlich die Wiederherstellung</li>
+                      <li>✓ Behalten Sie mehrere Backup-Versionen</li>
+                      <li>✓ Die App läuft komplett offline - Backups sind Ihre einzige Sicherheit!</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>
