@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Pencil, Trash2, Package, Upload, User, Download, FileUp, Database } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Upload, User, Download, FileUp, Database, Settings as SettingsIcon, Power, PowerOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Bearbeiten() {
@@ -31,6 +31,14 @@ export default function Bearbeiten() {
   // Backup State
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+
+  // Settings State
+  const [sellerSystemEnabled, setSellerSystemEnabled] = useState(true);
+
+  useEffect(() => {
+    const enabled = localStorage.getItem('sellerSystemEnabled');
+    setSellerSystemEnabled(enabled !== 'false');
+  }, []);
 
   const queryClient = useQueryClient();
 
@@ -337,6 +345,30 @@ export default function Bearbeiten() {
     }
   };
 
+  const toggleSellerSystem = () => {
+    const newState = !sellerSystemEnabled;
+    
+    if (!newState) {
+      // Deaktivieren
+      if (confirm('Möchten Sie das Verkäufer-System wirklich deaktivieren? Die App wird dann ohne Verkäufer-Auswahl starten.')) {
+        localStorage.setItem('sellerSystemEnabled', 'false');
+        localStorage.setItem('currentSeller', JSON.stringify({ name: 'Standard', id: 'default' }));
+        setSellerSystemEnabled(false);
+        toast.success('Verkäufer-System deaktiviert');
+        setTimeout(() => window.location.reload(), 500);
+      }
+    } else {
+      // Aktivieren
+      if (confirm('Möchten Sie das Verkäufer-System aktivieren? Die App wird beim nächsten Start nach einem Verkäufer fragen.')) {
+        localStorage.setItem('sellerSystemEnabled', 'true');
+        localStorage.removeItem('currentSeller');
+        setSellerSystemEnabled(true);
+        toast.success('Verkäufer-System aktiviert');
+        setTimeout(() => window.location.reload(), 500);
+      }
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -370,7 +402,7 @@ export default function Bearbeiten() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="products" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="products" className="text-base">
             <Package className="w-4 h-4 mr-2" />
             Produkte
@@ -382,6 +414,10 @@ export default function Bearbeiten() {
           <TabsTrigger value="backup" className="text-base">
             <Database className="w-4 h-4 mr-2" />
             Backup
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="text-base">
+            <SettingsIcon className="w-4 h-4 mr-2" />
+            Einstellungen
           </TabsTrigger>
         </TabsList>
 
@@ -650,6 +686,94 @@ export default function Bearbeiten() {
                       <li>✓ Behalten Sie mehrere Backup-Versionen</li>
                       <li>✓ Die App läuft komplett offline - Backups sind Ihre einzige Sicherheit!</li>
                     </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Settings Tab */}
+        <TabsContent value="settings" className="space-y-6">
+          <div className="bg-gradient-to-r from-gray-600 to-slate-600 dark:from-gray-700 dark:to-slate-700 rounded-2xl p-6 shadow-lg text-white">
+            <div>
+              <h2 className="text-3xl font-bold">Einstellungen</h2>
+              <p className="text-gray-100 dark:text-gray-200 mt-2">App-Konfiguration</p>
+            </div>
+          </div>
+
+          <div className="grid gap-6">
+            {/* Verkäufer-System Toggle */}
+            <Card className="dark:bg-slate-800 dark:border-slate-700">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className={`p-3 rounded-lg ${sellerSystemEnabled ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                    {sellerSystemEnabled ? (
+                      <Power className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    ) : (
+                      <PowerOff className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold dark:text-white mb-2">Verkäufer-System</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      {sellerSystemEnabled ? (
+                        <>
+                          Das Verkäufer-System ist <strong className="text-green-600 dark:text-green-400">aktiviert</strong>. 
+                          Die App fragt beim Start nach dem Verkäufer und speichert Verkäufe mit Verkäufernamen.
+                        </>
+                      ) : (
+                        <>
+                          Das Verkäufer-System ist <strong className="text-red-600 dark:text-red-400">deaktiviert</strong>. 
+                          Die App startet direkt ohne Verkäufer-Auswahl.
+                        </>
+                      )}
+                    </p>
+                    
+                    {sellerSystemEnabled ? (
+                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-green-800 dark:text-green-300 font-medium mb-2">
+                          ✓ Vorteile des Verkäufer-Systems:
+                        </p>
+                        <ul className="text-sm text-green-700 dark:text-green-400 space-y-1">
+                          <li>• Mehrere Verkäufer können die App nutzen</li>
+                          <li>• Verkäufe werden mit Verkäufername gespeichert</li>
+                          <li>• Kassen-Verwaltung pro Verkäufer</li>
+                          <li>• Auswertungen nach Verkäufer möglich</li>
+                        </ul>
+                      </div>
+                    ) : (
+                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-blue-800 dark:text-blue-300 font-medium mb-2">
+                          ℹ️ Ohne Verkäufer-System:
+                        </p>
+                        <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
+                          <li>• App startet schneller (kein Login)</li>
+                          <li>• Einfacher für Einzelnutzung</li>
+                          <li>• Alle Verkäufe unter "Standard"</li>
+                        </ul>
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={toggleSellerSystem}
+                      className={sellerSystemEnabled 
+                        ? "bg-red-600 hover:bg-red-700 text-white" 
+                        : "bg-green-600 hover:bg-green-700 text-white"
+                      }
+                    >
+                      {sellerSystemEnabled ? (
+                        <>
+                          <PowerOff className="w-4 h-4 mr-2" />
+                          Verkäufer-System deaktivieren
+                        </>
+                      ) : (
+                        <>
+                          <Power className="w-4 h-4 mr-2" />
+                          Verkäufer-System aktivieren
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
               </CardContent>

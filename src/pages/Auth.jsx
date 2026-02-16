@@ -14,6 +14,16 @@ export default function Auth() {
   const [newSellerName, setNewSellerName] = useState('');
   const navigate = useNavigate();
 
+  // Prüfe ob Verkäufer-System aktiviert ist
+  React.useEffect(() => {
+    const sellerSystemEnabled = localStorage.getItem('sellerSystemEnabled');
+    if (sellerSystemEnabled === 'false') {
+      // Verkäufer-System ist deaktiviert, direkt zu Produkten
+      localStorage.setItem('currentSeller', JSON.stringify({ name: 'Standard', id: 'default' }));
+      navigate(createPageUrl('Produkte'));
+    }
+  }, [navigate]);
+
   const { data: sellers = [] } = useQuery({
     queryKey: ['sellers'],
     queryFn: () => offlineClient.entities.Seller.list('name', 100)

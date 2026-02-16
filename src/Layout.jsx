@@ -30,16 +30,34 @@ export default function Layout({ children, currentPageName }) {
 
   // Check if user is logged in + Initial Data Load
   useEffect(() => {
+    const sellerSystemEnabled = localStorage.getItem('sellerSystemEnabled') !== 'false';
     const seller = localStorage.getItem('currentSeller');
-    if (!seller && currentPageName !== 'Auth') {
-      navigate(createPageUrl('Auth'));
-    } else if (seller) {
-      try {
-        setCurrentSeller(JSON.parse(seller));
-      } catch (error) {
-        console.error('Fehler beim Parsen des Verkäufers:', error);
-        localStorage.removeItem('currentSeller');
+    
+    if (!sellerSystemEnabled) {
+      // Verkäufer-System deaktiviert - Standard-Verkäufer setzen
+      if (!seller) {
+        localStorage.setItem('currentSeller', JSON.stringify({ name: 'Standard', id: 'default' }));
+        setCurrentSeller({ name: 'Standard', id: 'default' });
+      } else {
+        try {
+          setCurrentSeller(JSON.parse(seller));
+        } catch (error) {
+          localStorage.setItem('currentSeller', JSON.stringify({ name: 'Standard', id: 'default' }));
+          setCurrentSeller({ name: 'Standard', id: 'default' });
+        }
+      }
+    } else {
+      // Verkäufer-System aktiviert - normale Logik
+      if (!seller && currentPageName !== 'Auth') {
         navigate(createPageUrl('Auth'));
+      } else if (seller) {
+        try {
+          setCurrentSeller(JSON.parse(seller));
+        } catch (error) {
+          console.error('Fehler beim Parsen des Verkäufers:', error);
+          localStorage.removeItem('currentSeller');
+          navigate(createPageUrl('Auth'));
+        }
       }
     }
   }, [currentPageName, navigate]);
@@ -89,22 +107,26 @@ export default function Layout({ children, currentPageName }) {
             </div>
             
             <div className="flex items-center gap-2">
-              {/* Current User */}
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg text-sm border border-green-300 dark:border-green-700">
-                <UserIcon className="w-4 h-4 text-green-700 dark:text-green-400 no-select" />
-                <span className="text-green-600 dark:text-green-400 font-medium mr-1">Verkäufer:</span>
-                <span className="font-bold text-green-800 dark:text-green-300">{currentSeller?.name}</span>
-              </div>
+              {/* Current User - nur anzeigen wenn Verkäufer-System aktiv */}
+              {localStorage.getItem('sellerSystemEnabled') !== 'false' && (
+                <>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg text-sm border border-green-300 dark:border-green-700">
+                    <UserIcon className="w-4 h-4 text-green-700 dark:text-green-400 no-select" />
+                    <span className="text-green-600 dark:text-green-400 font-medium mr-1">Verkäufer:</span>
+                    <span className="font-bold text-green-800 dark:text-green-300">{currentSeller?.name}</span>
+                  </div>
 
-              {/* Logout Button */}
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                size="icon"
-                className="hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-700 no-select"
-              >
-                <LogOut className="w-4 h-4 no-select" />
-              </Button>
+                  {/* Logout Button */}
+                  <Button
+                    onClick={handleLogout}
+                    variant="outline"
+                    size="icon"
+                    className="hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 hover:border-red-300 dark:hover:border-red-700 no-select"
+                  >
+                    <LogOut className="w-4 h-4 no-select" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
