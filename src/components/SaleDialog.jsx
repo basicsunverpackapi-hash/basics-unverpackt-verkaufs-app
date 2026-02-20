@@ -189,10 +189,11 @@ export default function SaleDialog({ product, open, onClose, onComplete }) {
                   <>
                     <p className="text-sm font-semibold text-gray-600 mb-2">Zu zahlen</p>
                     <p className="text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">{totalPrice.toFixed(2)} €</p>
+                    <p className="text-base text-gray-600 mt-2 font-medium">für {(parseFloat(inputValue) || 0).toFixed(0)} g</p>
                   </>
                 ) : (
                   <>
-                    <p className="text-sm font-semibold text-gray-600 mb-2">Gewicht</p>
+                    <p className="text-sm font-semibold text-gray-600 mb-2">Gewicht ausgeben</p>
                     <p className="text-4xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent">
                       {weightKg >= 1 
                         ? `${weightKg % 1 === 0 ? weightKg.toFixed(0) : weightKg.toFixed(weightKg < 10 ? 2 : 1)} kg` 

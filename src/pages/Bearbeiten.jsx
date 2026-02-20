@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Pencil, Trash2, Package, Upload, User, Download, FileUp, Database, Settings as SettingsIcon, Power, PowerOff, ShoppingCart, Wallet, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Bearbeiten() {
+  const [currentSeller, setCurrentSeller] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({
