@@ -12,6 +12,8 @@ import { createPageUrl } from '../utils';
 export default function Auth() {
   const [showCreateSeller, setShowCreateSeller] = useState(false);
   const [newSellerName, setNewSellerName] = useState('');
+  const [showAdminCode, setShowAdminCode] = useState(false);
+  const [adminCode, setAdminCode] = useState('');
   const navigate = useNavigate();
 
   // Prüfe ob Verkäufer-System aktiviert ist
@@ -34,6 +36,19 @@ export default function Auth() {
     toast.success(`Willkommen, ${seller.name}!`);
     navigate(createPageUrl('Produkte'));
     window.location.reload();
+  };
+
+  const handleAdminLogin = () => {
+    if (adminCode === '0613') {
+      const adminSeller = { name: 'Administrator', id: 'admin', is_admin: true };
+      localStorage.setItem('currentSeller', JSON.stringify(adminSeller));
+      toast.success('Admin-Zugang gewährt');
+      navigate(createPageUrl('Bearbeiten'));
+      window.location.reload();
+    } else {
+      toast.error('Falscher Code');
+      setAdminCode('');
+    }
   };
 
   const handleCreateSeller = async () => {
@@ -126,6 +141,50 @@ export default function Auth() {
                 </Button>
               </div>
             </div>
+          ) : showAdminCode ? (
+            <div className="space-y-4">
+              <div className="text-center mb-4">
+                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <User className="w-10 h-10 text-red-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Administrator</h3>
+                <p className="text-sm text-gray-600 mt-2">Bitte geben Sie den Admin-Code ein</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">Admin-Code</label>
+                <Input
+                  type="password"
+                  value={adminCode}
+                  onChange={(e) => setAdminCode(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+                  placeholder="****"
+                  className="h-12 text-base text-center text-2xl tracking-widest"
+                  autoFocus
+                  maxLength={4}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowAdminCode(false);
+                    setAdminCode('');
+                  }}
+                  className="flex-1"
+                >
+                  Zurück
+                </Button>
+                <Button
+                  onClick={handleAdminLogin}
+                  disabled={adminCode.length !== 4}
+                  className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                >
+                  Anmelden
+                </Button>
+              </div>
+            </div>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-gray-700 mb-4">
@@ -149,6 +208,15 @@ export default function Auth() {
               >
                 + Neuen Verkäufer hinzufügen
               </Button>
+              <div className="pt-4 border-t border-gray-200">
+                <Button
+                  onClick={() => setShowAdminCode(true)}
+                  variant="outline"
+                  className="w-full h-12 text-base border-2 hover:bg-red-50 hover:border-red-500 text-red-600 font-semibold"
+                >
+                  🔐 Administrator-Zugang
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

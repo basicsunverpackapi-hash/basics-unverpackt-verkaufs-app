@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Plus, Pencil, Trash2, Package, Upload, User, Download, FileUp, Database, Settings as SettingsIcon, Power, PowerOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Upload, User, Download, FileUp, Database, Settings as SettingsIcon, Power, PowerOff, ShoppingCart, Wallet, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function Bearbeiten() {
@@ -38,7 +38,14 @@ export default function Bearbeiten() {
   useEffect(() => {
     const enabled = localStorage.getItem('sellerSystemEnabled');
     setSellerSystemEnabled(enabled !== 'false');
+    
+    const seller = localStorage.getItem('currentSeller');
+    if (seller) {
+      setCurrentSeller(JSON.parse(seller));
+    }
   }, []);
+
+  const isAdmin = currentSeller?.is_admin === true;
 
   const queryClient = useQueryClient();
 
@@ -128,6 +135,30 @@ export default function Bearbeiten() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sellers'] });
       toast.success('Verkäufer gelöscht');
+    }
+  });
+
+  const deleteSaleMutation = useMutation({
+    mutationFn: (id) => offlineClient.entities.Sale.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      toast.success('Verkauf gelöscht');
+    }
+  });
+
+  const deleteCashRegisterMutation = useMutation({
+    mutationFn: (id) => offlineClient.entities.CashRegister.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cashRegister'] });
+      toast.success('Kassen-Eintrag gelöscht');
+    }
+  });
+
+  const deletePurchaseMutation = useMutation({
+    mutationFn: (id) => offlineClient.entities.Purchase.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['purchases'] });
+      toast.success('Einkauf gelöscht');
     }
   });
 
@@ -401,8 +432,8 @@ export default function Bearbeiten() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="products" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6">
+      <Tabs defaultValue={isAdmin ? "admin" : "products"} className="w-full">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} mb-6`}>
           <TabsTrigger value="products" className="text-base">
             <Package className="w-4 h-4 mr-2" />
             Produkte
@@ -419,6 +450,12 @@ export default function Bearbeiten() {
             <SettingsIcon className="w-4 h-4 mr-2" />
             Einstellungen
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="admin" className="text-base bg-red-50 data-[state=active]:bg-red-100">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Admin
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Produkte Tab */}
@@ -692,6 +729,132 @@ export default function Bearbeiten() {
             </Card>
           </div>
         </TabsContent>
+
+        {/* Admin Tab - nur für Admin sichtbar */}
+        {isAdmin && (
+          <TabsContent value="admin" className="space-y-6">
+            <div className="bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 rounded-2xl p-6 shadow-lg text-white">
+              <div>
+                <h2 className="text-3xl font-bold">🔐 Administrator</h2>
+                <p className="text-red-100 dark:text-red-200 mt-2">Verwaltung & Einstellungen</p>
+              </div>
+            </div>
+
+            {/* Verkäufe Verwaltung */}
+            <Card className="dark:bg-slate-800 dark:border-slate-700">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5" />
+                  Verkäufe Verwaltung
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {sales.length === 0 ? (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">Keine Verkäufe vorhanden</p>
+                ) : (
+                  sales.slice(0, 20).map((sale) => (
+                    <div key={sale.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">{new Date(sale.date).toLocaleString('de-DE')}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {sale.total_amount?.toFixed(2)} € • {sale.payment_method} • {sale.seller_name}
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          if (confirm('Verkauf wirklich löschen?')) {
+                            deleteSaleMutation.mutate(sale.id);
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Kassen Verwaltung */}
+            <Card className="dark:bg-slate-800 dark:border-slate-700">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5" />
+                  Kassen-Einträge Verwaltung
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {cashRegister.length === 0 ? (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">Keine Einträge vorhanden</p>
+                ) : (
+                  cashRegister.slice(0, 20).map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">{entry.seller_name} • {entry.type}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {entry.amount?.toFixed(2)} € • {new Date(entry.date).toLocaleDateString('de-DE')}
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          if (confirm('Eintrag wirklich löschen?')) {
+                            deleteCashRegisterMutation.mutate(entry.id);
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Einkäufe Verwaltung */}
+            <Card className="dark:bg-slate-800 dark:border-slate-700">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5" />
+                  Einkäufe Verwaltung
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {purchases.length === 0 ? (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-4">Keine Einkäufe vorhanden</p>
+                ) : (
+                  purchases.slice(0, 20).map((purchase) => (
+                    <div key={purchase.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium">{purchase.item_name}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {purchase.amount?.toFixed(2)} € • {purchase.payment_method} • {purchase.seller_name}
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          if (confirm('Einkauf wirklich löschen?')) {
+                            deletePurchaseMutation.mutate(purchase.id);
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-6">

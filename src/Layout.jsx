@@ -72,7 +72,11 @@ export default function Layout({ children, currentPageName }) {
     navigate(createPageUrl('Auth'));
   };
 
-  const menuItems = [
+  const isAdmin = currentSeller?.is_admin === true;
+
+  const menuItems = isAdmin ? [
+    { name: 'Bearbeiten', icon: Settings, path: 'Bearbeiten' }
+  ] : [
     { name: 'Produkte', icon: Package, path: 'Produkte' },
     { name: 'Verkäufe', icon: ShoppingCart, path: 'Verkäufe' },
     { name: 'Buchhaltung', icon: BarChart3, path: 'Analyse' },
@@ -86,6 +90,13 @@ export default function Layout({ children, currentPageName }) {
   if (currentPageName === 'Auth' || !currentSeller) {
     return children;
   }
+
+  // Admin redirect
+  useEffect(() => {
+    if (isAdmin && currentPageName !== 'Bearbeiten') {
+      navigate(createPageUrl('Bearbeiten'));
+    }
+  }, [isAdmin, currentPageName, navigate]);
 
 
 
@@ -102,7 +113,9 @@ export default function Layout({ children, currentPageName }) {
                 className="w-11 h-11 rounded-xl shadow-lg shadow-green-200 dark:shadow-green-900 object-cover"
               />
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">Basics Unverpackt</h1>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                Basics Unverpackt {isAdmin && <span className="text-red-600 dark:text-red-400 text-sm">• Admin</span>}
+              </h1>
               </div>
             </div>
             
