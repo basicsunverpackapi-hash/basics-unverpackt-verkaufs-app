@@ -86,17 +86,17 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Kaufen', icon: ShoppingBag, path: 'Kaufen' }
   ];
 
+  // Admin redirect
+  React.useEffect(() => {
+    if (isAdmin && currentPageName !== 'Bearbeiten' && currentPageName !== 'Auth') {
+      navigate(createPageUrl('Bearbeiten'));
+    }
+  }, [isAdmin, currentPageName, navigate]);
+
   // Don't show layout on auth page
   if (currentPageName === 'Auth' || !currentSeller) {
     return children;
   }
-
-  // Admin redirect
-  useEffect(() => {
-    if (isAdmin && currentPageName !== 'Bearbeiten') {
-      navigate(createPageUrl('Bearbeiten'));
-    }
-  }, [isAdmin, currentPageName, navigate]);
 
 
 

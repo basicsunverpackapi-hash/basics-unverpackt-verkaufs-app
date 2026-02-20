@@ -553,10 +553,12 @@ export default function Bearbeiten() {
               <h2 className="text-3xl font-bold">Verkäufer bearbeiten</h2>
               <p className="text-blue-100 dark:text-blue-200 mt-2">Verkäufer verwalten und erstellen</p>
             </div>
-            <Button onClick={() => openSellerDialog()} className="bg-white dark:bg-slate-100 text-blue-700 hover:bg-blue-50 dark:hover:bg-slate-200 font-bold shadow-lg rounded-xl px-6 py-3">
-              <Plus className="w-5 h-5 mr-2" />
-              Neuer Verkäufer
-            </Button>
+            {isAdmin && (
+              <Button onClick={() => openSellerDialog()} className="bg-white dark:bg-slate-100 text-blue-700 hover:bg-blue-50 dark:hover:bg-slate-200 font-bold shadow-lg rounded-xl px-6 py-3">
+                <Plus className="w-5 h-5 mr-2" />
+                Neuer Verkäufer
+              </Button>
+            )}
           </div>
 
           {/* Sellers List */}
@@ -577,26 +579,40 @@ export default function Bearbeiten() {
                     </div>
 
                     <div className="flex gap-2 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => openSellerDialog(seller)}
-                        className="no-select"
-                      >
-                        <Pencil className="w-4 h-4 no-select" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          if (confirm('Verkäufer wirklich löschen? Dies löscht auch alle zugehörigen Daten (Verkäufe, Kasse, etc.).')) {
-                            deleteSellerMutation.mutate(seller.id);
-                          }
-                        }}
-                        className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 no-select"
-                      >
-                        <Trash2 className="w-4 h-4 no-select" />
-                      </Button>
+                      {isAdmin && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => openSellerDialog(seller)}
+                            className="no-select"
+                          >
+                            <Pencil className="w-4 h-4 no-select" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {
+                              if (confirm('Verkäufer wirklich löschen? Dies löscht auch alle zugehörigen Daten (Verkäufe, Kasse, etc.).')) {
+                                deleteSellerMutation.mutate(seller.id);
+                              }
+                            }}
+                            className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 no-select"
+                          >
+                            <Trash2 className="w-4 h-4 no-select" />
+                          </Button>
+                        </>
+                      )}
+                      {!isAdmin && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openSellerDialog(seller)}
+                          className="no-select"
+                        >
+                          <Pencil className="w-4 h-4 no-select" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -868,19 +884,20 @@ export default function Bearbeiten() {
           </div>
 
           <div className="grid gap-6">
-            {/* Verkäufer-System Toggle */}
-            <Card className="dark:bg-slate-800 dark:border-slate-700">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-lg ${sellerSystemEnabled ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700'}`}>
-                    {sellerSystemEnabled ? (
-                      <Power className="w-6 h-6 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <PowerOff className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold dark:text-white mb-2">Verkäufer-System</h3>
+            {/* Verkäufer-System Toggle - nur für Admin */}
+            {isAdmin && (
+              <Card className="dark:bg-slate-800 dark:border-slate-700">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-lg ${sellerSystemEnabled ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                      {sellerSystemEnabled ? (
+                        <Power className="w-6 h-6 text-green-600 dark:text-green-400" />
+                      ) : (
+                        <PowerOff className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold dark:text-white mb-2">Verkäufer-System</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">
                       {sellerSystemEnabled ? (
                         <>
@@ -939,10 +956,11 @@ export default function Bearbeiten() {
                         </>
                       )}
                     </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </TabsContent>
       </Tabs>
