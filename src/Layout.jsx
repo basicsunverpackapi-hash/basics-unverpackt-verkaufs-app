@@ -40,7 +40,8 @@ export default function Layout({ children, currentPageName }) {
         setCurrentSeller({ name: 'Standard', id: 'default' });
       } else {
         try {
-          setCurrentSeller(JSON.parse(seller));
+          const parsed = JSON.parse(seller);
+          setCurrentSeller(parsed);
         } catch (error) {
           localStorage.setItem('currentSeller', JSON.stringify({ name: 'Standard', id: 'default' }));
           setCurrentSeller({ name: 'Standard', id: 'default' });
@@ -52,7 +53,13 @@ export default function Layout({ children, currentPageName }) {
         navigate(createPageUrl('Auth'));
       } else if (seller) {
         try {
-          setCurrentSeller(JSON.parse(seller));
+          const parsed = JSON.parse(seller);
+          setCurrentSeller(parsed);
+          
+          // Admin redirect - innerhalb des gleichen useEffect
+          if (parsed.is_admin === true && currentPageName !== 'Bearbeiten' && currentPageName !== 'Auth') {
+            navigate(createPageUrl('Bearbeiten'));
+          }
         } catch (error) {
           console.error('Fehler beim Parsen des Verkäufers:', error);
           localStorage.removeItem('currentSeller');
@@ -61,10 +68,6 @@ export default function Layout({ children, currentPageName }) {
       }
     }
   }, [currentPageName, navigate]);
-
-
-
-
 
   const handleLogout = () => {
     localStorage.removeItem('currentSeller');
@@ -85,13 +88,6 @@ export default function Layout({ children, currentPageName }) {
     { name: 'Bearbeiten', icon: Settings, path: 'Bearbeiten' },
     { name: 'Kaufen', icon: ShoppingBag, path: 'Kaufen' }
   ];
-
-  // Admin redirect
-  React.useEffect(() => {
-    if (isAdmin && currentPageName !== 'Bearbeiten' && currentPageName !== 'Auth') {
-      navigate(createPageUrl('Bearbeiten'));
-    }
-  }, [isAdmin, currentPageName, navigate]);
 
   // Don't show layout on auth page
   if (currentPageName === 'Auth' || !currentSeller) {
