@@ -855,14 +855,14 @@ export default function Bearbeiten() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wallet className="w-5 h-5" />
-                  Kassen-Einträge ({cashRegister.length})
+                  Kassen-Einträge ({cashRegister.filter(e => e.type !== 'sale').length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {cashRegister.length === 0 ? (
+                {cashRegister.filter(e => e.type !== 'sale').length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-center py-4">Keine Einträge vorhanden</p>
                 ) : (
-                  cashRegister.slice(0, 50).map((entry) => (
+                  cashRegister.filter(e => e.type !== 'sale').slice(0, 50).map((entry) => (
                     <div key={entry.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-lg hover:shadow-sm transition-shadow">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
