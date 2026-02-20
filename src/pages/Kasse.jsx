@@ -11,6 +11,7 @@ import { format, startOfDay, isToday } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 export default function Kasse() {
+  const [currentSeller, setCurrentSeller] = React.useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [emptyDialogOpen, setEmptyDialogOpen] = useState(false);
   const [correctionDialogOpen, setCorrectionDialogOpen] = useState(false);
@@ -22,6 +23,15 @@ export default function Kasse() {
 
   const [visibleActivities, setVisibleActivities] = useState(10);
   const queryClient = useQueryClient();
+
+  React.useEffect(() => {
+    const seller = localStorage.getItem('currentSeller');
+    if (seller) {
+      setCurrentSeller(JSON.parse(seller));
+    }
+  }, []);
+
+  const isAdmin = currentSeller?.is_admin === true;
 
   const { data: cashEntries = [] } = useQuery({
     queryKey: ['cashRegister'],
@@ -146,18 +156,22 @@ export default function Kasse() {
               <span className="hidden sm:inline">Bestand erfassen</span>
               <span className="sm:hidden">Bestand</span>
             </Button>
-            <Button 
-              onClick={() => setCorrectionDialogOpen(true)}
-              className="bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-lg rounded-xl px-3 py-2 sm:px-4 sm:py-3 flex-1 sm:flex-none text-sm sm:text-base"
-            >
-              Korrigieren
-            </Button>
-            <Button 
-              onClick={() => setEmptyDialogOpen(true)}
-              className="bg-red-600 text-white hover:bg-red-700 font-bold shadow-lg rounded-xl px-3 py-2 sm:px-4 sm:py-3 flex-1 sm:flex-none text-sm sm:text-base"
-            >
-              Entleeren
-            </Button>
+            {isAdmin && (
+              <>
+                <Button 
+                  onClick={() => setCorrectionDialogOpen(true)}
+                  className="bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-lg rounded-xl px-3 py-2 sm:px-4 sm:py-3 flex-1 sm:flex-none text-sm sm:text-base"
+                >
+                  Korrigieren
+                </Button>
+                <Button 
+                  onClick={() => setEmptyDialogOpen(true)}
+                  className="bg-red-600 text-white hover:bg-red-700 font-bold shadow-lg rounded-xl px-3 py-2 sm:px-4 sm:py-3 flex-1 sm:flex-none text-sm sm:text-base"
+                >
+                  Entleeren
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -778,30 +778,69 @@ export default function Bearbeiten() {
 
             {/* Verkäufe Verwaltung */}
             <Card className="dark:bg-slate-800 dark:border-slate-700">
-              <CardContent className="p-6 space-y-3">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5" />
+                  Verkäufe ({sales.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
                 {sales.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-center py-4">Keine Verkäufe vorhanden</p>
                 ) : (
-                  sales.slice(0, 50).map((sale) => (
-                    <div key={sale.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                  sales.slice(0, 100).map((sale) => (
+                    <div key={sale.id} className="flex items-start justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-slate-700 dark:to-slate-600 rounded-lg hover:shadow-md transition-shadow border border-gray-200 dark:border-slate-600">
                       <div className="flex-1">
-                        <div className="font-medium text-lg">{new Date(sale.date).toLocaleString('de-DE')}</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          {sale.total_amount?.toFixed(2)} € • {sale.payment_method} • {sale.seller_name}
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-bold text-lg text-gray-900 dark:text-white">
+                            {new Date(sale.date).toLocaleDateString('de-DE', { 
+                              day: '2-digit', 
+                              month: '2-digit', 
+                              year: 'numeric' 
+                            })}
+                          </span>
+                          <span className="text-gray-500 dark:text-gray-400">•</span>
+                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                            {new Date(sale.date).toLocaleTimeString('de-DE', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })} Uhr
+                          </span>
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                          {sale.items?.length || 0} Artikel
+                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                            sale.payment_method === 'Bargeld' 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          }`}>
+                            {sale.payment_method === 'Bargeld' ? '💵 Bargeld' : '💳 Karte'}
+                          </span>
+                          <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                            {sale.total_amount?.toFixed(2)} €
+                          </span>
                         </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          <strong>Verkäufer:</strong> {sale.seller_name} • <strong>{sale.items?.length || 0}</strong> Artikel
+                        </div>
+                        {sale.items && sale.items.length > 0 && (
+                          <div className="mt-2 pl-4 border-l-2 border-gray-300 dark:border-gray-600 space-y-1">
+                            {sale.items.map((item, idx) => (
+                              <div key={idx} className="text-xs text-gray-600 dark:text-gray-400">
+                                • {item.product_name} ({(item.weight_kg * 1000).toFixed(0)}g) - {item.total_price?.toFixed(2)} €
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => {
-                          if (confirm(`Verkauf wirklich löschen?\n\nBetrag: ${sale.total_amount?.toFixed(2)} €\nZahlung: ${sale.payment_method}\n${sale.payment_method === 'Bargeld' ? '\n⚠️ Die Kasse wird automatisch korrigiert!' : ''}`)) {
+                          if (confirm(`Verkauf wirklich löschen?\n\nDatum: ${new Date(sale.date).toLocaleString('de-DE')}\nBetrag: ${sale.total_amount?.toFixed(2)} €\nZahlung: ${sale.payment_method}\nVerkäufer: ${sale.seller_name}\n${sale.payment_method === 'Bargeld' ? '\n⚠️ Die Kasse wird automatisch korrigiert!' : ''}`)) {
                             deleteSaleMutation.mutate(sale);
                           }
                         }}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 ml-4"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -816,20 +855,36 @@ export default function Bearbeiten() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Wallet className="w-5 h-5" />
-                  Kassen-Einträge Verwaltung
+                  Kassen-Einträge ({cashRegister.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {cashRegister.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-center py-4">Keine Einträge vorhanden</p>
                 ) : (
-                  cashRegister.slice(0, 20).map((entry) => (
-                    <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                  cashRegister.slice(0, 50).map((entry) => (
+                    <div key={entry.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-lg hover:shadow-sm transition-shadow">
                       <div className="flex-1">
-                        <div className="font-medium">{entry.seller_name} • {entry.type}</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {entry.amount?.toFixed(2)} € • {new Date(entry.date).toLocaleDateString('de-DE')}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-gray-900 dark:text-white">{entry.seller_name}</span>
+                          <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 uppercase">
+                            {entry.type}
+                          </span>
                         </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className={`font-bold ${entry.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {entry.amount >= 0 ? '+' : ''}{entry.amount?.toFixed(2)} €
+                          </span>
+                          {' • '}
+                          {new Date(entry.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          {' '}
+                          {new Date(entry.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
+                        </div>
+                        {entry.note && (
+                          <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                            📝 {entry.note}
+                          </div>
+                        )}
                       </div>
                       <Button
                         variant="outline"
@@ -839,7 +894,7 @@ export default function Bearbeiten() {
                             deleteCashRegisterMutation.mutate(entry.id);
                           }
                         }}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -849,35 +904,49 @@ export default function Bearbeiten() {
               </CardContent>
             </Card>
 
-            {/* Einkäufe Verwaltung */}
+            {/* Einkäufe Verwaltung (Buchhaltung) */}
             <Card className="dark:bg-slate-800 dark:border-slate-700">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ShoppingBag className="w-5 h-5" />
-                  Einkäufe Verwaltung
+                  Einkäufe / Buchhaltung ({purchases.length})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {purchases.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-center py-4">Keine Einkäufe vorhanden</p>
                 ) : (
-                  purchases.slice(0, 20).map((purchase) => (
-                    <div key={purchase.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                  purchases.slice(0, 50).map((purchase) => (
+                    <div key={purchase.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg hover:shadow-sm transition-shadow border border-orange-200 dark:border-orange-700">
                       <div className="flex-1">
-                        <div className="font-medium">{purchase.item_name}</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {purchase.amount?.toFixed(2)} € • {purchase.payment_method} • {purchase.seller_name}
+                        <div className="font-bold text-lg text-gray-900 dark:text-white mb-1">
+                          {purchase.item_name}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                            purchase.payment_method === 'Bargeld' 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          }`}>
+                            {purchase.payment_method}
+                          </span>
+                          <span className="text-lg font-bold text-red-600 dark:text-red-400">
+                            -{purchase.amount?.toFixed(2)} €
+                          </span>
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          {purchase.seller_name} • {new Date(purchase.date).toLocaleDateString('de-DE')} {new Date(purchase.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
                         </div>
                       </div>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => {
-                          if (confirm('Einkauf wirklich löschen?')) {
+                          if (confirm(`Einkauf wirklich löschen?\n\nArtikel: ${purchase.item_name}\nBetrag: ${purchase.amount?.toFixed(2)} €\nZahlung: ${purchase.payment_method}`)) {
                             deletePurchaseMutation.mutate(purchase.id);
                           }
                         }}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
