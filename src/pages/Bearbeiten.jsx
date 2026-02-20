@@ -141,10 +141,26 @@ export default function Bearbeiten() {
   });
 
   const deleteSaleMutation = useMutation({
-    mutationFn: (id) => offlineClient.entities.Sale.delete(id),
+    mutationFn: async (sale) => {
+      // Lösche den Verkauf
+      await offlineClient.entities.Sale.delete(sale.id);
+      
+      // Korrigiere die Kasse wenn Bargeld
+      if (sale.payment_method === 'Bargeld') {
+        // Erstelle einen Korrektur-Eintrag in der Kasse (negativer Betrag)
+        await offlineClient.entities.CashRegister.create({
+          seller_name: sale.seller_name,
+          amount: -sale.total_amount,
+          type: 'correction',
+          date: new Date().toISOString(),
+          note: `Verkauf storniert: ${new Date(sale.date).toLocaleString('de-DE')}`
+        });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
-      toast.success('Verkauf gelöscht');
+      queryClient.invalidateQueries({ queryKey: ['cashRegister'] });
+      toast.success('Verkauf gelöscht und Kasse korrigiert');
     }
   });
 
@@ -434,8 +450,14 @@ export default function Bearbeiten() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue={isAdmin ? "admin" : "products"} className="w-full">
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'} mb-6`}>
+      <Tabs defaultValue={isAdmin ? "sales" : "products"} className="w-full">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'} mb-6`}>
+          {isAdmin && (
+            <TabsTrigger value="sales" className="text-base bg-red-50 data-[state=active]:bg-red-100">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Verkäufe
+            </TabsTrigger>
+          )}
           <TabsTrigger value="products" className="text-base">
             <Package className="w-4 h-4 mr-2" />
             Produkte
@@ -448,14 +470,10 @@ export default function Bearbeiten() {
             <Database className="w-4 h-4 mr-2" />
             Backup
           </TabsTrigger>
-          <TabsTrigger value="settings" className="text-base">
-            <SettingsIcon className="w-4 h-4 mr-2" />
-            Einstellungen
-          </TabsTrigger>
           {isAdmin && (
-            <TabsTrigger value="admin" className="text-base bg-red-50 data-[state=active]:bg-red-100">
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              Admin
+            <TabsTrigger value="settings" className="text-base">
+              <SettingsIcon className="w-4 h-4 mr-2" />
+              Einstellungen
             </TabsTrigger>
           )}
         </TabsList>
@@ -748,45 +766,42 @@ export default function Bearbeiten() {
           </div>
         </TabsContent>
 
-        {/* Admin Tab - nur für Admin sichtbar */}
+        {/* Sales Tab - nur für Admin sichtbar */}
         {isAdmin && (
-          <TabsContent value="admin" className="space-y-6">
+          <TabsContent value="sales" className="space-y-6">
             <div className="bg-gradient-to-r from-red-600 to-red-700 dark:from-red-700 dark:to-red-800 rounded-2xl p-6 shadow-lg text-white">
               <div>
-                <h2 className="text-3xl font-bold">🔐 Administrator</h2>
-                <p className="text-red-100 dark:text-red-200 mt-2">Verwaltung & Einstellungen</p>
+                <h2 className="text-3xl font-bold">🔐 Verkäufe Verwaltung</h2>
+                <p className="text-red-100 dark:text-red-200 mt-2">Verkäufe verwalten und löschen</p>
               </div>
             </div>
 
             {/* Verkäufe Verwaltung */}
             <Card className="dark:bg-slate-800 dark:border-slate-700">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5" />
-                  Verkäufe Verwaltung
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="p-6 space-y-3">
                 {sales.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-center py-4">Keine Verkäufe vorhanden</p>
                 ) : (
-                  sales.slice(0, 20).map((sale) => (
-                    <div key={sale.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-700 rounded-lg">
+                  sales.slice(0, 50).map((sale) => (
+                    <div key={sale.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-700 rounded-lg">
                       <div className="flex-1">
-                        <div className="font-medium">{new Date(sale.date).toLocaleString('de-DE')}</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <div className="font-medium text-lg">{new Date(sale.date).toLocaleString('de-DE')}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                           {sale.total_amount?.toFixed(2)} € • {sale.payment_method} • {sale.seller_name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                          {sale.items?.length || 0} Artikel
                         </div>
                       </div>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => {
-                          if (confirm('Verkauf wirklich löschen?')) {
-                            deleteSaleMutation.mutate(sale.id);
+                          if (confirm(`Verkauf wirklich löschen?\n\nBetrag: ${sale.total_amount?.toFixed(2)} €\nZahlung: ${sale.payment_method}\n${sale.payment_method === 'Bargeld' ? '\n⚠️ Die Kasse wird automatisch korrigiert!' : ''}`)) {
+                            deleteSaleMutation.mutate(sale);
                           }
                         }}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>

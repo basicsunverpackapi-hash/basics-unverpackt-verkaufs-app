@@ -37,20 +37,35 @@ export default function Verkäufe() {
   };
 
   const deleteSaleMutation = useMutation({
-    mutationFn: async (id) => {
-      await offlineClient.entities.Sale.delete(id);
+    mutationFn: async (sale) => {
+      // Lösche den Verkauf
+      await offlineClient.entities.Sale.delete(sale.id);
+      
+      // Korrigiere die Kasse wenn Bargeld
+      if (sale.payment_method === 'Bargeld') {
+        // Erstelle einen Korrektur-Eintrag in der Kasse (negativer Betrag)
+        await offlineClient.entities.CashRegister.create({
+          seller_name: sale.seller_name,
+          amount: -sale.total_amount,
+          type: 'correction',
+          date: new Date().toISOString(),
+          note: `Verkauf storniert: ${new Date(sale.date).toLocaleString('de-DE')}`
+        });
+      }
+      
       // Sofort den Cache mit den aktuellen lokalen Daten aktualisieren
       const updatedSales = await offlineClient.entities.Sale.list('-date', 100);
       queryClient.setQueryData(['sales'], updatedSales);
     },
     onSuccess: () => {
-      toast.success('Verkauf storniert');
+      queryClient.invalidateQueries({ queryKey: ['cashRegister'] });
+      toast.success('Verkauf storniert und Kasse korrigiert');
     }
   });
 
   const handleCancel = (sale) => {
-    if (confirm('Verkauf wirklich stornieren?')) {
-      deleteSaleMutation.mutate(sale.id);
+    if (confirm(`Verkauf wirklich stornieren?\n\nBetrag: ${sale.total_amount?.toFixed(2)} €\nZahlung: ${sale.payment_method}\n${sale.payment_method === 'Bargeld' ? '\n⚠️ Die Kasse wird automatisch korrigiert!' : ''}`)) {
+      deleteSaleMutation.mutate(sale);
     }
   };
 
