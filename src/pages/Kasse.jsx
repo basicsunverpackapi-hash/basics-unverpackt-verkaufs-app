@@ -40,12 +40,6 @@ export default function Kasse() {
 
 
 
-  const { data: purchases = [] } = useQuery({
-    queryKey: ['purchases'],
-    queryFn: () => offlineClient.entities.Purchase.list('-date', 1000)
-  });
-
-
 
   const addCashMutation = useMutation({
     mutationFn: (data) => offlineClient.entities.CashRegister.create(data),
@@ -113,13 +107,10 @@ export default function Kasse() {
     });
   };
 
-  // Berechne Kassensummen (nur Einträge und Ladeneinkäufe)
-  const cashPurchases = purchases.filter(p => p.payment_method === 'Bargeld');
-  
-  const totalFromEntries = cashEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
-  const totalFromPurchases = cashPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
-  
-  const totalCash = totalFromEntries - totalFromPurchases;
+  // Berechne Kassensummen
+  // Bargeld-Einkäufe werden beim Kaufen bereits als negativer CashRegister-Eintrag gespeichert,
+  // daher nur die CashRegister-Einträge summieren (kein doppelter Abzug!)
+  const totalCash = cashEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
 
   // Gruppiere nach Verkäufer
   const sellerStats = {};
@@ -131,12 +122,11 @@ export default function Kasse() {
     sellerStats[entry.seller_name].entries += entry.amount || 0;
   });
 
-  // Alle Aktivitäten (neueste zuerst) - ohne Verkäufe
-  const allActivities = [
-    ...cashEntries.map(e => ({ ...e, activityType: 'entry' })),
-    ...cashPurchases.map(p => ({ ...p, activityType: 'purchase' }))
-  ].sort((a, b) => new Date(b.date) - new Date(a.date));
-  
+  // Alle Aktivitäten aus CashRegister (bereits alle Einträge, Korrekturen, Entnahmen, Einkäufe)
+  const allActivities = cashEntries
+    .map(e => ({ ...e, activityType: 'entry' }))
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
   const displayedActivities = allActivities.slice(0, visibleActivities);
 
   return (
@@ -233,40 +223,27 @@ export default function Kasse() {
           </h3>
           <div className="space-y-2">
             {displayedActivities.map(activity => {
-              if (activity.activityType === 'entry') {
-                return (
-                  <div key={`entry-${activity.id}`} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex-1">
-                      <p className="font-medium">{activity.seller_name}</p>
-                      <p className="text-sm text-gray-600">
-                        {format(new Date(activity.date), 'dd.MM.yyyy HH:mm', { locale: de })} Uhr
-                        {activity.note && ` - ${activity.note}`}
-                      </p>
-                    </div>
-                    <p className={`text-lg font-bold ${activity.amount >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                      {activity.amount >= 0 ? '+' : ''}{activity.amount.toFixed(2)} €
+              const isNegative = activity.amount < 0;
+              return (
+                <div key={`entry-${activity.id}`} className={`flex items-center justify-between p-3 rounded-lg border ${isNegative ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
+                  <div className="flex-1">
+                    <p className="font-medium">{activity.seller_name}</p>
+                    <p className="text-sm text-gray-600">
+                      {format(new Date(activity.date), 'dd.MM.yyyy HH:mm', { locale: de })} Uhr
+                      {activity.note && ` • ${activity.note}`}
                     </p>
                   </div>
-                );
-              } else {
-                return (
-                  <div key={`purchase-${activity.id}`} className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-                    <div className="flex-1">
-                      <p className="font-medium">{activity.seller_name}</p>
-                      <p className="text-sm text-gray-600">
-                        {format(new Date(activity.date), 'dd.MM.yyyy HH:mm', { locale: de })} Uhr - Einkauf: {activity.item_name}
-                      </p>
-                    </div>
-                    <p className="text-lg font-bold text-red-600">-{activity.amount.toFixed(2)} €</p>
-                  </div>
-                );
-              }
+                  <p className={`text-lg font-bold ${isNegative ? 'text-red-600' : 'text-blue-600'}`}>
+                    {activity.amount >= 0 ? '+' : ''}{activity.amount.toFixed(2)} €
+                  </p>
+                </div>
+              );
             })}
             {displayedActivities.length === 0 && (
               <p className="text-center text-gray-500 py-4">Noch keine Aktivitäten vorhanden</p>
             )}
           </div>
-          
+
           {visibleActivities < allActivities.length && (
             <div className="mt-4 text-center">
               <Button
