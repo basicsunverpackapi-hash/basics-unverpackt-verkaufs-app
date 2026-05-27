@@ -32,7 +32,9 @@ export default function Auth() {
   });
 
   const handleSelectSeller = (seller) => {
-    localStorage.setItem('currentSeller', JSON.stringify(seller));
+    // is_admin explizit auf false setzen - nur Admin-PIN-Login darf is_admin=true haben
+    const sellerData = { ...seller, is_admin: false };
+    localStorage.setItem('currentSeller', JSON.stringify(sellerData));
     toast.success(`Willkommen, ${seller.name}!`);
     navigate(createPageUrl('Produkte'));
     window.location.reload();
