@@ -1,0 +1,36 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Produktname"
+    },
+    "price_per_unit": {
+      "type": "number",
+      "description": "Verkaufspreis pro Einheit in Euro"
+    },
+    "unit_grams": {
+      "type": "number",
+      "default": 1000,
+      "description": "Einheit in Gramm (z.B. 100, 1000)"
+    },
+    "purchase_price_per_kg": {
+      "type": "number",
+      "description": "Einkaufspreis pro Kilogramm in Euro"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Bild-URL des Produkts"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Ist das Produkt aktiv?"
+    }
+  },
+  "required": [
+    "name",
+    "price_per_unit"
+  ]
+}

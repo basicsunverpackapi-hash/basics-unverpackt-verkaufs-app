@@ -1,0 +1,58 @@
+{
+  "name": "Sale",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Verkaufsdatum"
+    },
+    "items": {
+      "type": "array",
+      "description": "Verkaufte Artikel",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "weight_kg": {
+            "type": "number"
+          },
+          "price_per_kg": {
+            "type": "number"
+          },
+          "total_price": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Gesamtbetrag in Euro"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "Bargeld",
+        "Karte"
+      ],
+      "description": "Zahlungsmethode"
+    },
+    "seller_name": {
+      "type": "string",
+      "description": "Name des Verk\u00e4ufers"
+    }
+  },
+  "required": [
+    "date",
+    "items",
+    "total_amount",
+    "payment_method",
+    "seller_name"
+  ]
+}

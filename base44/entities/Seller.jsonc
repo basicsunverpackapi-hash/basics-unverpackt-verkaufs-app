@@ -1,0 +1,13 @@
+{
+  "name": "Seller",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name des Verk\u00e4ufers"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

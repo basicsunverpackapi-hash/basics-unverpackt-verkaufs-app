@@ -1,0 +1,38 @@
+{
+  "name": "Purchase",
+  "type": "object",
+  "properties": {
+    "date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Kaufdatum"
+    },
+    "item_name": {
+      "type": "string",
+      "description": "Name des Artikels"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Betrag in Euro"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "Bargeld",
+        "Karte"
+      ],
+      "description": "Zahlungsmethode"
+    },
+    "seller_name": {
+      "type": "string",
+      "description": "Name des Verk\u00e4ufers"
+    }
+  },
+  "required": [
+    "date",
+    "item_name",
+    "amount",
+    "payment_method",
+    "seller_name"
+  ]
+}

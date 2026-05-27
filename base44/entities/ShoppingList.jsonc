@@ -1,0 +1,22 @@
+{
+  "name": "ShoppingList",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Produkt-ID"
+    },
+    "product_name": {
+      "type": "string",
+      "description": "Produktname"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen"
+    }
+  },
+  "required": [
+    "product_id",
+    "product_name"
+  ]
+}

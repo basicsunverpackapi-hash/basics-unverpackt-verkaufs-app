@@ -1,0 +1,27 @@
+{
+  "name": "Debt",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name der Person"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Schuldbetrag in Euro"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Notizen"
+    },
+    "paid": {
+      "type": "boolean",
+      "default": false,
+      "description": "Wurde bezahlt?"
+    }
+  },
+  "required": [
+    "name",
+    "amount"
+  ]
+}

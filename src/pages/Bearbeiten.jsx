@@ -485,10 +485,12 @@ export default function Bearbeiten() {
               <h2 className="text-3xl font-bold">Produkte bearbeiten</h2>
               <p className="text-amber-100 dark:text-amber-200 mt-2">Produkte verwalten und erstellen</p>
             </div>
-            <Button onClick={() => openDialog()} className="bg-white dark:bg-slate-100 text-amber-700 hover:bg-amber-50 dark:hover:bg-slate-200 font-bold shadow-lg rounded-xl px-6 py-3">
-              <Plus className="w-5 h-5 mr-2" />
-              Neues Produkt
-            </Button>
+            {isAdmin && (
+              <Button onClick={() => openDialog()} className="bg-white dark:bg-slate-100 text-amber-700 hover:bg-amber-50 dark:hover:bg-slate-200 font-bold shadow-lg rounded-xl px-6 py-3">
+                <Plus className="w-5 h-5 mr-2" />
+                Neues Produkt
+              </Button>
+            )}
           </div>
 
 
@@ -528,26 +530,30 @@ export default function Bearbeiten() {
                 </div>
 
                 <div className="flex gap-2 flex-shrink-0">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => openDialog(product)}
-                    className="no-select"
-                  >
-                    <Pencil className="w-4 h-4 no-select" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      if (confirm('Produkt wirklich löschen?')) {
-                        deleteProductMutation.mutate(product.id);
-                      }
-                    }}
-                    className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 no-select"
-                  >
-                    <Trash2 className="w-4 h-4 no-select" />
-                  </Button>
+                  {isAdmin && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => openDialog(product)}
+                        className="no-select"
+                      >
+                        <Pencil className="w-4 h-4 no-select" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          if (confirm('Produkt wirklich löschen?')) {
+                            deleteProductMutation.mutate(product.id);
+                          }
+                        }}
+                        className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 no-select"
+                      >
+                        <Trash2 className="w-4 h-4 no-select" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -621,16 +627,6 @@ export default function Bearbeiten() {
                           </Button>
                         </>
                       )}
-                      {!isAdmin && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => openSellerDialog(seller)}
-                          className="no-select"
-                        >
-                          <Pencil className="w-4 h-4 no-select" />
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -697,7 +693,8 @@ export default function Bearbeiten() {
               </CardContent>
             </Card>
 
-            {/* Import Card */}
+            {/* Import Card - nur für Admin */}
+            {isAdmin && (
             <Card className="dark:bg-slate-800 dark:border-slate-700">
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
@@ -742,6 +739,8 @@ export default function Bearbeiten() {
                 </div>
               </CardContent>
             </Card>
+
+            )}
 
             {/* Info Card */}
             <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-700">

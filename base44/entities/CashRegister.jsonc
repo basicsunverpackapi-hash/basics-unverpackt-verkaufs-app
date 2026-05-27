@@ -1,0 +1,39 @@
+{
+  "name": "CashRegister",
+  "type": "object",
+  "properties": {
+    "seller_name": {
+      "type": "string",
+      "description": "Name des Verk\u00e4ufers"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Betrag in Euro"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "initial",
+        "sale",
+        "empty",
+        "correction"
+      ],
+      "description": "Art der Transaktion"
+    },
+    "date": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Datum der Transaktion"
+    },
+    "note": {
+      "type": "string",
+      "description": "Notiz"
+    }
+  },
+  "required": [
+    "seller_name",
+    "amount",
+    "type",
+    "date"
+  ]
+}
