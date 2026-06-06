@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Plus, Trash2, ClipboardList, User, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { centsToMoney, formatCents, formatMoney, moneyToCents, sumMoneyCents } from '@/lib/money';
 
 export default function Merkzettel() {
   const [activeTab, setActiveTab] = useState('reorder');
@@ -107,9 +108,16 @@ export default function Merkzettel() {
       return;
     }
 
+    const debtCents = moneyToCents(debtAmount);
+    if (debtCents <= 0) {
+      toast.error('Bitte einen gueltigen Betrag eingeben');
+      return;
+    }
+
     addDebtMutation.mutate({
       name: debtName,
-      amount: parseFloat(debtAmount),
+      amount: centsToMoney(debtCents),
+      amount_cents: debtCents,
       notes: debtNotes || undefined,
       paid: false
     });
@@ -117,7 +125,7 @@ export default function Merkzettel() {
 
   const activeProducts = products.filter(p => p.active !== false);
   const unpaidDebts = debts.filter(d => !d.paid);
-  const totalDebt = unpaidDebts.reduce((sum, d) => sum + (d.amount || 0), 0);
+  const totalDebtCents = sumMoneyCents(unpaidDebts.map((debt) => debt.amount));
 
   return (
     <div className="space-y-6">
@@ -281,7 +289,7 @@ export default function Merkzettel() {
                     Offene Schulden ({unpaidDebts.length})
                   </span>
                   <span className="text-2xl font-bold text-red-600">
-                    {totalDebt.toFixed(2)} €
+                    {formatCents(totalDebtCents)} €
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -299,7 +307,7 @@ export default function Merkzettel() {
                           <div className="flex items-center gap-2 mb-1">
                             <h4 className="font-semibold text-lg">{debt.name}</h4>
                             <span className="text-xl font-bold text-red-600">
-                              {debt.amount?.toFixed(2)} €
+                              {formatMoney(debt.amount)} €
                             </span>
                           </div>
                           {debt.notes && (

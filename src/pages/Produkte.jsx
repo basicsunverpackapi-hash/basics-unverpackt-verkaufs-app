@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import SaleDialog from '../components/SaleDialog';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { centsToMoney, formatMoney, moneyToCents } from '@/lib/money';
 
 export default function Produkte() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,13 +27,10 @@ export default function Produkte() {
 
   const createSaleMutation = useMutation({
     mutationFn: async (saleData) => {
-      console.log('Erstelle Verkauf offline:', saleData);
       const newSale = await offlineClient.entities.Sale.create(saleData);
-      console.log('Verkauf erstellt:', newSale);
       
       // Sofort den Cache mit den aktuellen lokalen Daten aktualisieren
       const updatedSales = await offlineClient.entities.Sale.list('-date', 100);
-      console.log('Aktualisierte Sales-Liste:', updatedSales);
       queryClient.setQueryData(['sales'], updatedSales);
       
       // Queries neu laden erzwingen
@@ -85,7 +83,8 @@ export default function Produkte() {
 
   const handleSaleComplete = async (saleItem, paymentMethod) => {
     try {
-      if (!saleItem || !saleItem.product_id || !saleItem.total_price) {
+      const saleCents = saleItem?.total_price_cents ?? moneyToCents(saleItem?.total_price);
+      if (!saleItem || !saleItem.product_id || saleCents <= 0) {
         toast.error('Ungültige Verkaufsdaten');
         return;
       }
@@ -99,7 +98,8 @@ export default function Produkte() {
       const saleData = {
         date: new Date().toISOString(),
         items: [saleItem],
-        total_amount: Number(saleItem.total_price),
+        total_amount: centsToMoney(saleCents),
+        total_amount_cents: saleCents,
         payment_method: paymentMethod,
         seller_name: currentSeller.name
       };
@@ -108,7 +108,8 @@ export default function Produkte() {
       if (paymentMethod === 'Bargeld') {
         await offlineClient.entities.CashRegister.create({
           seller_name: currentSeller.name,
-          amount: Number(saleItem.total_price),
+          amount: centsToMoney(saleCents),
+          amount_cents: saleCents,
           type: 'sale',
           date: new Date().toISOString(),
           note: `Verkauf: ${saleItem.product_name}`
@@ -205,7 +206,7 @@ export default function Produkte() {
                   )}
                   <div className="flex justify-between items-baseline gap-2">
                     <span className="text-2xl font-extrabold text-green-600 dark:text-green-400">
-                      {product.price_per_unit?.toFixed(2)}€
+                      {formatMoney(product.price_per_unit)}€
                     </span>
                     <span className="text-sm text-gray-500 dark:text-gray-400 font-semibold whitespace-nowrap">
                       {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)}kg` : `${product.unit_grams}g`}

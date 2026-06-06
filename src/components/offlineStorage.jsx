@@ -1,8 +1,20 @@
-// Offline Storage Manager
-const STORAGE_KEY = 'basics_unverpackt_offline_data';
-const SYNC_QUEUE_KEY = 'basics_unverpackt_sync_queue';
+const DB_NAME = 'basics_unverpackt_offline_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'entities';
+const LEGACY_STORAGE_KEY = 'basics_unverpackt_offline_data';
+const LEGACY_SYNC_QUEUE_KEY = 'basics_unverpackt_sync_queue';
 
-// Initiale Seed-Daten für Produkte (Ihre originalen Produkte)
+const ENTITY_NAMES = ['Product', 'Sale', 'ShoppingList', 'Debt', 'Seller', 'CashRegister', 'Purchase'];
+
+const nowIso = () => new Date().toISOString();
+
+const createId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return `local_${crypto.randomUUID()}`;
+  }
+  return `local_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+};
+
 const SEED_PRODUCTS = [
   {
     id: 'seed_1',
@@ -12,8 +24,8 @@ const SEED_PRODUCTS = [
     purchase_price_per_kg: 3.0,
     image_url: '',
     active: true,
-    created_date: new Date().toISOString(),
-    updated_date: new Date().toISOString(),
+    created_date: nowIso(),
+    updated_date: nowIso(),
     _isSeed: true
   },
   {
@@ -24,8 +36,8 @@ const SEED_PRODUCTS = [
     purchase_price_per_kg: null,
     image_url: null,
     active: true,
-    created_date: new Date().toISOString(),
-    updated_date: new Date().toISOString(),
+    created_date: nowIso(),
+    updated_date: nowIso(),
     _isSeed: true
   },
   {
@@ -36,20 +48,20 @@ const SEED_PRODUCTS = [
     purchase_price_per_kg: null,
     image_url: null,
     active: true,
-    created_date: new Date().toISOString(),
-    updated_date: new Date().toISOString(),
+    created_date: nowIso(),
+    updated_date: nowIso(),
     _isSeed: true
   },
   {
     id: 'seed_4',
-    name: 'Sanddorn Gummibärchen',
+    name: 'Sanddorn Gummibaerchen',
     price_per_unit: 1.75,
     unit_grams: 100,
     purchase_price_per_kg: null,
     image_url: null,
     active: true,
-    created_date: new Date().toISOString(),
-    updated_date: new Date().toISOString(),
+    created_date: nowIso(),
+    updated_date: nowIso(),
     _isSeed: true
   },
   {
@@ -60,8 +72,8 @@ const SEED_PRODUCTS = [
     purchase_price_per_kg: null,
     image_url: null,
     active: true,
-    created_date: new Date().toISOString(),
-    updated_date: new Date().toISOString(),
+    created_date: nowIso(),
+    updated_date: nowIso(),
     _isSeed: true
   },
   {
@@ -72,142 +84,259 @@ const SEED_PRODUCTS = [
     purchase_price_per_kg: null,
     image_url: null,
     active: true,
-    created_date: new Date().toISOString(),
-    updated_date: new Date().toISOString(),
+    created_date: nowIso(),
+    updated_date: nowIso(),
     _isSeed: true
   }
 ];
 
-export const offlineStorage = {
-  // Initiale Daten beim ersten Laden setzen
-  initializeSeedData() {
-    const storage = this.getStorage();
-    
-    // Seed-Produkte nur initialisieren, wenn noch keine vorhanden sind
-    if (!storage.Product || storage.Product.length === 0) {
-      storage.Product = [...SEED_PRODUCTS];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-      console.log('Seed-Produkte initialisiert:', SEED_PRODUCTS.length);
-    }
-  },
-  // Daten lokal speichern
-  saveLocal(entityName, data) {
-    try {
-      const storage = this.getStorage();
-      if (!storage[entityName]) {
-        storage[entityName] = [];
-      }
-      storage[entityName] = data;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(storage));
-    } catch (error) {
-      console.error('Fehler beim lokalen Speichern:', error);
-    }
-  },
-
-  // Lokale Daten abrufen
-  getLocal(entityName) {
-    try {
-      const storage = this.getStorage();
-      
-      // Seed-Daten für Produkte initialisieren wenn leer
-      if (entityName === 'Product' && (!storage[entityName] || storage[entityName].length === 0)) {
-        this.initializeSeedData();
-        return this.getStorage().Product || [];
-      }
-      
-      return storage[entityName] || [];
-    } catch (error) {
-      console.error('Fehler beim Abrufen lokaler Daten:', error);
-      return [];
-    }
-  },
-
-  // Gesamten Storage abrufen
-  getStorage() {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY);
-      return data ? JSON.parse(data) : {};
-    } catch (error) {
-      return {};
-    }
-  },
-
-  // Storage leeren
-  clearStorage() {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(SYNC_QUEUE_KEY);
-  },
-
-  // Operation zur Sync-Queue hinzufügen
-  addToSyncQueue(operation) {
-    try {
-      const queue = this.getSyncQueue();
-      operation.queueId = Date.now() + Math.random();
-      operation.timestamp = new Date().toISOString();
-      queue.push(operation);
-      localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(queue));
-    } catch (error) {
-      console.error('Fehler beim Hinzufügen zur Sync-Queue:', error);
-    }
-  },
-
-  // Sync-Queue abrufen
-  getSyncQueue() {
-    try {
-      const data = localStorage.getItem(SYNC_QUEUE_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch (error) {
-      return [];
-    }
-  },
-
-  // Sync-Queue leeren
-  clearSyncQueue() {
-    localStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify([]));
-  },
-
-  // Einzelnes Item aus Entity erstellen
-  createLocalItem(entityName, data) {
-    const items = this.getLocal(entityName);
-    const newItem = {
-      ...data,
-      id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      created_date: new Date().toISOString(),
-      updated_date: new Date().toISOString(),
-      _isLocal: true
-    };
-    items.unshift(newItem); // Am Anfang einfügen für neueste zuerst
-    this.saveLocal(entityName, items);
-    console.log(`Lokales Item erstellt für ${entityName}:`, newItem);
-    console.log(`Gesamtanzahl ${entityName}:`, items.length);
-    return newItem;
-  },
-
-  // Einzelnes Item aktualisieren
-  updateLocalItem(entityName, id, updates) {
-    const items = this.getLocal(entityName);
-    const index = items.findIndex(item => item.id === id);
-    if (index !== -1) {
-      items[index] = {
-        ...items[index],
-        ...updates,
-        updated_date: new Date().toISOString()
-      };
-      this.saveLocal(entityName, items);
-      return items[index];
-    }
-    return null;
-  },
-
-  // Einzelnes Item löschen
-  deleteLocalItem(entityName, id) {
-    const items = this.getLocal(entityName);
-    const filtered = items.filter(item => item.id !== id);
-    this.saveLocal(entityName, filtered);
+const readLegacyStorage = () => {
+  try {
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    console.warn('Legacy-Speicher konnte nicht gelesen werden:', error);
+    return {};
   }
 };
 
-// Online-Status prüfen
-export const isOnline = () => {
-  return typeof window !== 'undefined' ? navigator.onLine : true;
+const saveLegacyEntity = (entityName, items) => {
+  try {
+    const storage = readLegacyStorage();
+    storage[entityName] = items;
+    localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(storage));
+  } catch (error) {
+    console.error('Fallback-Speicher konnte nicht geschrieben werden:', error);
+  }
 };
+
+class IndexedEntityStore {
+  constructor() {
+    this.dbPromise = null;
+    this.readyPromise = null;
+  }
+
+  isAvailable() {
+    return typeof window !== 'undefined' && 'indexedDB' in window;
+  }
+
+  openDb() {
+    if (!this.isAvailable()) return Promise.resolve(null);
+    if (this.dbPromise) return this.dbPromise;
+
+    this.dbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: 'entityName' });
+        }
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => console.warn('IndexedDB-Upgrade wartet auf ein anderes offenes App-Fenster.');
+    });
+
+    return this.dbPromise;
+  }
+
+  async withStore(mode, callback) {
+    const db = await this.openDb();
+    if (!db) return callback(null);
+
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, mode);
+      const store = transaction.objectStore(STORE_NAME);
+      let callbackResult;
+
+      transaction.oncomplete = () => resolve(callbackResult);
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error);
+
+      callbackResult = callback(store);
+    });
+  }
+
+  async readEntity(entityName) {
+    if (!this.isAvailable()) {
+      return readLegacyStorage()[entityName] || [];
+    }
+
+    try {
+      const db = await this.openDb();
+      const record = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, 'readonly');
+        const request = transaction.objectStore(STORE_NAME).get(entityName);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      return Array.isArray(record?.items) ? record.items : [];
+    } catch (error) {
+      console.error(`IndexedDB-Lesen fuer ${entityName} fehlgeschlagen:`, error);
+      return readLegacyStorage()[entityName] || [];
+    }
+  }
+
+  async writeEntity(entityName, items) {
+    const cleanItems = Array.isArray(items) ? items : [];
+
+    if (!this.isAvailable()) {
+      saveLegacyEntity(entityName, cleanItems);
+      return;
+    }
+
+    try {
+      await this.withStore('readwrite', (store) => {
+        store.put({
+          entityName,
+          items: cleanItems,
+          updated_at: nowIso()
+        });
+      });
+      saveLegacyEntity(entityName, cleanItems);
+    } catch (error) {
+      console.error(`IndexedDB-Schreiben fuer ${entityName} fehlgeschlagen:`, error);
+      saveLegacyEntity(entityName, cleanItems);
+    }
+  }
+
+  async readAll() {
+    const result = {};
+
+    if (!this.isAvailable()) {
+      return readLegacyStorage();
+    }
+
+    try {
+      const db = await this.openDb();
+      const records = await new Promise((resolve, reject) => {
+        const transaction = db.transaction(STORE_NAME, 'readonly');
+        const request = transaction.objectStore(STORE_NAME).getAll();
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => reject(request.error);
+      });
+
+      records.forEach((record) => {
+        if (record?.entityName) {
+          result[record.entityName] = Array.isArray(record.items) ? record.items : [];
+        }
+      });
+      return result;
+    } catch (error) {
+      console.error('IndexedDB-Gesamtspeicher konnte nicht gelesen werden:', error);
+      return readLegacyStorage();
+    }
+  }
+
+  async clear() {
+    if (this.isAvailable()) {
+      await this.withStore('readwrite', (store) => {
+        store.clear();
+      });
+    }
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_SYNC_QUEUE_KEY);
+  }
+
+  async ensureReady() {
+    if (this.readyPromise) return this.readyPromise;
+
+    this.readyPromise = (async () => {
+      const current = await this.readAll();
+      const legacy = readLegacyStorage();
+
+      for (const entityName of ENTITY_NAMES) {
+        if ((!current[entityName] || current[entityName].length === 0) && Array.isArray(legacy[entityName]) && legacy[entityName].length > 0) {
+          await this.writeEntity(entityName, legacy[entityName]);
+        }
+      }
+
+      const products = await this.readEntity('Product');
+      if (products.length === 0) {
+        await this.writeEntity('Product', [...SEED_PRODUCTS]);
+      }
+    })();
+
+    return this.readyPromise;
+  }
+}
+
+const entityStore = new IndexedEntityStore();
+
+export const offlineStorage = {
+  async initializeSeedData() {
+    await entityStore.ensureReady();
+  },
+
+  async saveLocal(entityName, data) {
+    await entityStore.ensureReady();
+    await entityStore.writeEntity(entityName, data);
+  },
+
+  async getLocal(entityName) {
+    await entityStore.ensureReady();
+    return entityStore.readEntity(entityName);
+  },
+
+  async getStorage() {
+    await entityStore.ensureReady();
+    return entityStore.readAll();
+  },
+
+  async clearStorage() {
+    await entityStore.clear();
+    entityStore.readyPromise = null;
+  },
+
+  addToSyncQueue() {
+    // Die App ist bewusst lokal-only. Es wird keine Sync-Queue mehr aufgebaut.
+  },
+
+  getSyncQueue() {
+    return [];
+  },
+
+  clearSyncQueue() {
+    localStorage.removeItem(LEGACY_SYNC_QUEUE_KEY);
+  },
+
+  async createLocalItem(entityName, data) {
+    const items = await this.getLocal(entityName);
+    const item = {
+      ...data,
+      id: data?.id || createId(),
+      created_date: data?.created_date || nowIso(),
+      updated_date: nowIso(),
+      _isLocal: true
+    };
+
+    await this.saveLocal(entityName, [item, ...items]);
+    return item;
+  },
+
+  async updateLocalItem(entityName, id, updates) {
+    const items = await this.getLocal(entityName);
+    const index = items.findIndex((item) => item.id === id);
+
+    if (index === -1) return null;
+
+    const updated = {
+      ...items[index],
+      ...updates,
+      updated_date: nowIso()
+    };
+
+    items[index] = updated;
+    await this.saveLocal(entityName, items);
+    return updated;
+  },
+
+  async deleteLocalItem(entityName, id) {
+    const items = await this.getLocal(entityName);
+    await this.saveLocal(entityName, items.filter((item) => item.id !== id));
+  }
+};
+
+export const isOnline = () => false;

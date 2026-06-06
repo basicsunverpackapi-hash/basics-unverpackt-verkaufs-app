@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { offlineClient } from '@/components/offlineClient';
 import { toast } from 'sonner';
 import { ShoppingBag, Euro, CreditCard, Banknote } from 'lucide-react';
+import { centsToMoney, moneyToCents } from '@/lib/money';
 
 export default function KaufenPage() {
   const [itemName, setItemName] = useState('');
@@ -28,6 +29,7 @@ export default function KaufenPage() {
         await offlineClient.entities.CashRegister.create({
           seller_name: purchaseData.seller_name,
           amount: -purchaseData.amount,
+          amount_cents: -purchaseData.amount_cents,
           type: 'correction',
           date: new Date().toISOString(),
           note: `Einkauf: ${purchaseData.item_name}`
@@ -51,14 +53,14 @@ export default function KaufenPage() {
   });
 
   const handleSave = () => {
-    const amountNum = parseFloat(amount);
+    const amountCents = moneyToCents(amount);
 
     // Validierung
     if (!itemName.trim()) {
       toast.error('Bitte Artikelname eingeben');
       return;
     }
-    if (!amount || amountNum <= 0 || !isFinite(amountNum)) {
+    if (!amount || amountCents <= 0) {
       toast.error('Bitte gültigen Betrag eingeben');
       return;
     }
@@ -70,7 +72,8 @@ export default function KaufenPage() {
     const purchaseData = {
       date: new Date().toISOString(),
       item_name: itemName.trim(),
-      amount: amountNum,
+      amount: centsToMoney(amountCents),
+      amount_cents: amountCents,
       payment_method: paymentMethod,
       seller_name: currentSeller?.name || 'Unbekannt'
     };
@@ -117,7 +120,7 @@ export default function KaufenPage() {
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && itemName && amount && parseFloat(amount) > 0 && paymentMethod) {
+                  if (e.key === 'Enter' && itemName && amount && moneyToCents(amount) > 0 && paymentMethod) {
                     handleSave();
                   }
                 }}
@@ -170,7 +173,7 @@ export default function KaufenPage() {
           {/* Speichern Button */}
           <Button
             onClick={handleSave}
-            disabled={createPurchaseMutation.isPending || !itemName || !amount || parseFloat(amount) <= 0 || !paymentMethod}
+            disabled={createPurchaseMutation.isPending || !itemName || !amount || moneyToCents(amount) <= 0 || !paymentMethod}
             className="w-full h-14 text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 shadow-lg"
           >
             {createPurchaseMutation.isPending ? 'Speichern...' : 'Einkauf speichern'}

@@ -8,6 +8,9 @@ import { User } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '../utils';
+import InstallAppButton from '@/components/InstallAppButton';
+
+const ADMIN_PIN = '0613';
 
 export default function Auth() {
   const [showCreateSeller, setShowCreateSeller] = useState(false);
@@ -16,15 +19,9 @@ export default function Auth() {
   const [adminCode, setAdminCode] = useState('');
   const navigate = useNavigate();
 
-  // Prüfe ob Verkäufer-System aktiviert ist
   React.useEffect(() => {
-    const sellerSystemEnabled = localStorage.getItem('sellerSystemEnabled');
-    if (sellerSystemEnabled === 'false') {
-      // Verkäufer-System ist deaktiviert, direkt zu Produkten
-      localStorage.setItem('currentSeller', JSON.stringify({ name: 'Standard', id: 'default' }));
-      navigate(createPageUrl('Produkte'));
-    }
-  }, [navigate]);
+    localStorage.removeItem('sellerSystemEnabled');
+  }, []);
 
   const { data: sellers = [] } = useQuery({
     queryKey: ['sellers'],
@@ -32,8 +29,8 @@ export default function Auth() {
   });
 
   const handleSelectSeller = (seller) => {
-    // is_admin explizit auf false setzen - nur Admin-PIN-Login darf is_admin=true haben
     const sellerData = { ...seller, is_admin: false };
+    sessionStorage.removeItem('adminUnlocked');
     localStorage.setItem('currentSeller', JSON.stringify(sellerData));
     toast.success(`Willkommen, ${seller.name}!`);
     navigate(createPageUrl('Produkte'));
@@ -41,16 +38,18 @@ export default function Auth() {
   };
 
   const handleAdminLogin = () => {
-    if (adminCode === '0613') {
+    if (adminCode.trim() === ADMIN_PIN) {
       const adminSeller = { name: 'Administrator', id: 'admin', is_admin: true };
+      sessionStorage.setItem('adminUnlocked', 'true');
       localStorage.setItem('currentSeller', JSON.stringify(adminSeller));
-      toast.success('Admin-Zugang gewährt');
+      toast.success('Admin-Zugang gewaehrt');
       navigate(createPageUrl('Bearbeiten'));
       window.location.reload();
-    } else {
-      toast.error('Falscher Code');
-      setAdminCode('');
+      return;
     }
+
+    toast.error('Falscher Code');
+    setAdminCode('');
   };
 
   const handleCreateSeller = async () => {
@@ -63,19 +62,23 @@ export default function Auth() {
       const newSeller = await offlineClient.entities.Seller.create({
         name: newSellerName.trim()
       });
-      
-      toast.success('Verkäufer erfolgreich erstellt!');
-      localStorage.setItem('currentSeller', JSON.stringify(newSeller));
+
+      sessionStorage.removeItem('adminUnlocked');
+      toast.success('Verkaeufer erfolgreich erstellt!');
+      localStorage.setItem('currentSeller', JSON.stringify({ ...newSeller, is_admin: false }));
       navigate(createPageUrl('Produkte'));
       window.location.reload();
     } catch (error) {
-      console.error('Fehler beim Erstellen des Verkäufers:', error);
-      toast.error('Fehler beim Erstellen des Verkäufers');
+      console.error('Fehler beim Erstellen des Verkaeufers:', error);
+      toast.error('Fehler beim Erstellen des Verkaeufers');
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 flex items-center justify-center p-4">
+      <div className="fixed top-4 right-4 z-20">
+        <InstallAppButton />
+      </div>
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-xl">
           <CardTitle className="text-3xl font-bold">Basics Unverpackt</CardTitle>
@@ -90,15 +93,15 @@ export default function Auth() {
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Willkommen!</h3>
                 <p className="text-gray-600 mb-6">
-                  Es sind noch keine Verkäufer angelegt.<br />
-                  Bitte erstellen Sie jetzt Ihren ersten Verkäufer.
+                  Es sind noch keine Verkaeufer angelegt.<br />
+                  Bitte erstellen Sie jetzt Ihren ersten Verkaeufer.
                 </p>
               </div>
               <Button
                 onClick={() => setShowCreateSeller(true)}
                 className="w-full h-14 text-lg bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
               >
-                Neuen Verkäufer hinzufügen
+                Neuen Verkaeufer hinzufuegen
               </Button>
             </div>
           ) : showCreateSeller ? (
@@ -107,7 +110,7 @@ export default function Auth() {
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <User className="w-10 h-10 text-green-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Neuer Verkäufer</h3>
+                <h3 className="text-xl font-bold text-gray-900">Neuer Verkaeufer</h3>
               </div>
 
               <div>
@@ -139,7 +142,7 @@ export default function Auth() {
                   disabled={!newSellerName.trim()}
                   className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                 >
-                  Verkäufer erstellen
+                  Verkaeufer erstellen
                 </Button>
               </div>
             </div>
@@ -158,9 +161,16 @@ export default function Auth() {
                 <Input
                   type="password"
                   value={adminCode}
-                  onChange={(e) => setAdminCode(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+                  onChange={(e) => setAdminCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAdminLogin();
+                    }
+                  }}
                   placeholder="****"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   className="h-12 text-base text-center text-2xl tracking-widest"
                   autoFocus
                   maxLength={4}
@@ -176,11 +186,11 @@ export default function Auth() {
                   }}
                   className="flex-1"
                 >
-                  Zurück
+                  Zurueck
                 </Button>
                 <Button
                   onClick={handleAdminLogin}
-                  disabled={adminCode.length !== 4}
+                  disabled={adminCode.trim().length !== 4}
                   className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
                 >
                   Anmelden
@@ -208,7 +218,7 @@ export default function Auth() {
                 variant="outline"
                 className="w-full h-12 text-base border-dashed border-2 hover:bg-green-50 hover:border-green-500 text-gray-600"
               >
-                + Neuen Verkäufer hinzufügen
+                + Neuen Verkaeufer hinzufuegen
               </Button>
               <div className="pt-4 border-t border-gray-200">
                 <Button
@@ -216,7 +226,7 @@ export default function Auth() {
                   variant="outline"
                   className="w-full h-12 text-base border-2 hover:bg-red-50 hover:border-red-500 text-red-600 font-semibold"
                 >
-                  🔐 Administrator-Zugang
+                  Administrator-Zugang
                 </Button>
               </div>
             </div>

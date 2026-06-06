@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import { offlineClient } from '@/components/offlineClient';
 import { AlertCircle, X } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,11 +10,10 @@ export default function ReorderAlert() {
 
   const { data: shoppingList = [] } = useQuery({
     queryKey: ['shoppingList'],
-    queryFn: () => base44.entities.ShoppingList.list()
+    queryFn: () => offlineClient.entities.ShoppingList.list()
   });
 
   useEffect(() => {
-    // Reset dismissed state when shopping list changes
     const storedDismissed = sessionStorage.getItem('reorder_dismissed');
     if (storedDismissed === 'true' && shoppingList.length === 0) {
       sessionStorage.removeItem('reorder_dismissed');
@@ -40,7 +39,7 @@ export default function ReorderAlert() {
             Nachbestellung erforderlich
           </h3>
           <p className="text-sm text-orange-700">
-            {shoppingList.length} {shoppingList.length === 1 ? 'Produkt muss' : 'Produkte müssen'} nachbestellt werden.
+            {shoppingList.length} {shoppingList.length === 1 ? 'Produkt muss' : 'Produkte muessen'} nachbestellt werden.
           </p>
         </div>
         <Button

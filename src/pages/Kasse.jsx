@@ -5,10 +5,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Wallet, Plus, TrendingUp, User, Calendar } from 'lucide-react';
+import { Wallet, Plus, User, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
-import { format, startOfDay, isToday } from 'date-fns';
+import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { centsToMoney, formatCents, formatMoney, moneyToCents, sumMoneyCents } from '@/lib/money';
 
 export default function Kasse() {
   const [currentSeller, setCurrentSeller] = React.useState(null);
@@ -61,10 +62,16 @@ export default function Kasse() {
   const handleAddInitialAmount = (e) => {
     e.preventDefault();
     const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || '{}');
+    const amountCents = moneyToCents(initialAmount);
+    if (amountCents <= 0) {
+      toast.error('Bitte einen gueltigen Betrag eingeben');
+      return;
+    }
     
     addCashMutation.mutate({
       seller_name: currentSeller.name || 'Unbekannt',
-      amount: parseFloat(initialAmount),
+      amount: centsToMoney(amountCents),
+      amount_cents: amountCents,
       type: 'initial',
       date: new Date().toISOString(),
       note: note || undefined
@@ -75,18 +82,33 @@ export default function Kasse() {
     e.preventDefault();
     const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || '{}');
     
-    let amountToDeduct = 0;
+    const emptyAmountCents = moneyToCents(emptyAmount);
+    if (emptyAmountCents < 0) {
+      toast.error('Bitte einen gueltigen Betrag eingeben');
+      return;
+    }
+
+    let amountToDeductCents = 0;
     if (emptyMode === 'remaining') {
       // Benutzer gibt an, wieviel übrig bleiben soll
-      amountToDeduct = -(totalCash - parseFloat(emptyAmount || 0));
+      if (emptyAmountCents > totalCashCents) {
+        toast.error('Der Restbetrag kann nicht groesser als der Kassenstand sein');
+        return;
+      }
+      amountToDeductCents = -(totalCashCents - emptyAmountCents);
     } else {
       // Benutzer gibt an, wieviel entnommen wurde
-      amountToDeduct = -parseFloat(emptyAmount || 0);
+      if (emptyAmountCents > totalCashCents) {
+        toast.error('Es kann nicht mehr entnommen werden als in der Kasse ist');
+        return;
+      }
+      amountToDeductCents = -emptyAmountCents;
     }
     
     addCashMutation.mutate({
       seller_name: currentSeller.name || 'Unbekannt',
-      amount: amountToDeduct,
+      amount: centsToMoney(amountToDeductCents),
+      amount_cents: amountToDeductCents,
       type: 'empty',
       date: new Date().toISOString(),
       note: note || `${emptyMode === 'remaining' ? 'Kasse teilweise entleert' : 'Entnahme'}`
@@ -96,21 +118,27 @@ export default function Kasse() {
   const handleCorrection = (e) => {
     e.preventDefault();
     const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || '{}');
-    const correctionValue = parseFloat(correctionAmount) - totalCash;
+    const correctionAmountCents = moneyToCents(correctionAmount);
+    if (correctionAmountCents < 0) {
+      toast.error('Der Kassenstand darf nicht negativ sein');
+      return;
+    }
+    const correctionValueCents = correctionAmountCents - totalCashCents;
     
     addCashMutation.mutate({
       seller_name: currentSeller.name || 'Unbekannt',
-      amount: correctionValue,
+      amount: centsToMoney(correctionValueCents),
+      amount_cents: correctionValueCents,
       type: 'correction',
       date: new Date().toISOString(),
-      note: note || `Korrektur auf ${parseFloat(correctionAmount).toFixed(2)} €`
+      note: note || `Korrektur auf ${formatCents(correctionAmountCents)} EUR`
     });
   };
 
   // Berechne Kassensummen
   // Bargeld-Einkäufe werden beim Kaufen bereits als negativer CashRegister-Eintrag gespeichert,
   // daher nur die CashRegister-Einträge summieren (kein doppelter Abzug!)
-  const totalCash = cashEntries.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+  const totalCashCents = sumMoneyCents(cashEntries.map((entry) => entry.amount));
 
   // Gruppiere nach Verkäufer
   const sellerStats = {};
@@ -119,7 +147,7 @@ export default function Kasse() {
     if (!sellerStats[entry.seller_name]) {
       sellerStats[entry.seller_name] = { entries: 0 };
     }
-    sellerStats[entry.seller_name].entries += entry.amount || 0;
+    sellerStats[entry.seller_name].entries += moneyToCents(entry.amount);
   });
 
   // Alle Aktivitäten aus CashRegister (bereits alle Einträge, Korrekturen, Entnahmen, Einkäufe)
@@ -175,7 +203,7 @@ export default function Kasse() {
             </div>
             <div className="text-center">
               <p className="text-lg text-green-700 font-semibold mb-1">Kassenstand gesamt</p>
-              <p className="text-5xl font-bold text-green-900">{totalCash.toFixed(2)} €</p>
+              <p className="text-5xl font-bold text-green-900">{formatCents(totalCashCents)} €</p>
             </div>
           </div>
         </CardContent>
@@ -201,7 +229,7 @@ export default function Kasse() {
                   </div>
                   <div className="text-right">
                   <p className="text-2xl font-bold text-green-600">
-                    {stats.entries.toFixed(2)} €
+                    {formatCents(stats.entries)} €
                   </p>
                   <p className="text-xs text-gray-500">Gesamt</p>
                   </div>
@@ -223,7 +251,8 @@ export default function Kasse() {
           </h3>
           <div className="space-y-2">
             {displayedActivities.map(activity => {
-              const isNegative = activity.amount < 0;
+              const activityCents = moneyToCents(activity.amount);
+              const isNegative = activityCents < 0;
               return (
                 <div key={`entry-${activity.id}`} className={`flex items-center justify-between p-3 rounded-lg border ${isNegative ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
                   <div className="flex-1">
@@ -234,7 +263,7 @@ export default function Kasse() {
                     </p>
                   </div>
                   <p className={`text-lg font-bold ${isNegative ? 'text-red-600' : 'text-blue-600'}`}>
-                    {activity.amount >= 0 ? '+' : ''}{activity.amount.toFixed(2)} €
+                    {activityCents >= 0 ? '+' : ''}{formatMoney(activity.amount)} €
                   </p>
                 </div>
               );
@@ -319,7 +348,7 @@ export default function Kasse() {
           <div className="space-y-4">
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                Aktueller Kassenstand: <span className="font-bold">{totalCash.toFixed(2)} €</span>
+                Aktueller Kassenstand: <span className="font-bold">{formatCents(totalCashCents)} €</span>
               </p>
             </div>
 
@@ -363,8 +392,8 @@ export default function Kasse() {
                 {emptyAmount && (
                   <p className="text-sm text-gray-600 mt-2">
                     {emptyMode === 'remaining' 
-                      ? `Entnommen werden: ${(totalCash - parseFloat(emptyAmount || 0)).toFixed(2)} €`
-                      : `Neuer Kassenstand: ${(totalCash - parseFloat(emptyAmount || 0)).toFixed(2)} €`
+                      ? `Entnommen werden: ${formatCents(totalCashCents - moneyToCents(emptyAmount || 0))} €`
+                      : `Neuer Kassenstand: ${formatCents(totalCashCents - moneyToCents(emptyAmount || 0))} €`
                     }
                   </p>
                 )}
@@ -414,7 +443,7 @@ export default function Kasse() {
           <div className="space-y-4">
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                Aktueller Kassenstand: <span className="font-bold">{totalCash.toFixed(2)} €</span>
+                Aktueller Kassenstand: <span className="font-bold">{formatCents(totalCashCents)} €</span>
               </p>
             </div>
 
@@ -432,8 +461,8 @@ export default function Kasse() {
                 />
                 {correctionAmount && (
                   <p className="text-sm text-gray-600 mt-2">
-                    Differenz: <span className={parseFloat(correctionAmount) - totalCash >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      {(parseFloat(correctionAmount) - totalCash).toFixed(2)} €
+                    Differenz: <span className={moneyToCents(correctionAmount) - totalCashCents >= 0 ? 'text-green-600' : 'text-red-600'}>
+                      {formatCents(moneyToCents(correctionAmount) - totalCashCents)} €
                     </span>
                   </p>
                 )}

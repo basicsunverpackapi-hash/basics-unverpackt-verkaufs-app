@@ -52,6 +52,7 @@ import Auth from './pages/Auth';
 import Bearbeiten from './pages/Bearbeiten';
 import Kasse from './pages/Kasse';
 import Kaufen from './pages/Kaufen';
+import Installieren from './pages/Installieren';
 import Merkzettel from './pages/Merkzettel';
 import Produkte from './pages/Produkte';
 import verkUfe from './pages/Verkäufe';
@@ -64,6 +65,7 @@ export const PAGES = {
     "Bearbeiten": Bearbeiten,
     "Kasse": Kasse,
     "Kaufen": Kaufen,
+    "Installieren": Installieren,
     "Merkzettel": Merkzettel,
     "Produkte": Produkte,
     "Verkäufe": verkUfe,

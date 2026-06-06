@@ -3,14 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { offlineClient } from '@/components/offlineClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, TrendingUp, TrendingDown, DollarSign, Receipt, FileText, Calendar, ArrowUpRight, ArrowDownRight, Download, PieChart as PieChartIcon } from 'lucide-react';
+import { BookOpen, TrendingUp, TrendingDown, DollarSign, Receipt, FileText, Calendar, ArrowUpRight, ArrowDownRight, Download } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfYear, subMonths } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import jsPDF from 'jspdf';
 import { toast } from 'sonner';
+import { centsToMoney, moneyToCents } from '@/lib/money';
 
 export default function Buchhaltung() {
   const [selectedPeriod, setSelectedPeriod] = useState('month'); // 'month', 'quarter', 'year'
@@ -49,7 +49,7 @@ export default function Buchhaltung() {
       return saleDate >= startDate && saleDate <= endDate;
     });
 
-    const revenue = periodSales.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
+    const revenueCents = periodSales.reduce((sum, sale) => sum + moneyToCents(sale.total_amount), 0);
 
     // Ausgaben (Wareneinkauf + Kosten)
     const periodPurchases = purchases.filter(p => {
@@ -57,21 +57,24 @@ export default function Buchhaltung() {
       return purchaseDate >= startDate && purchaseDate <= endDate;
     });
 
-    const expenses = periodPurchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const expensesCents = periodPurchases.reduce((sum, p) => sum + moneyToCents(p.amount), 0);
 
     // COGS (Cost of Goods Sold) - Wareneinsatz
-    let cogs = 0;
+    let cogsCents = 0;
     periodSales.forEach(sale => {
       sale.items?.forEach(item => {
         const product = products.find(p => p.id === item.product_id);
         if (product && product.purchase_price_per_kg) {
-          cogs += item.weight_kg * product.purchase_price_per_kg;
+          cogsCents += Math.round(moneyToCents(product.purchase_price_per_kg) * (item.weight_kg || 0));
         }
       });
     });
 
-    const grossProfit = revenue - cogs;
-    const netProfit = revenue - cogs - expenses;
+    const revenue = centsToMoney(revenueCents);
+    const expenses = centsToMoney(expensesCents);
+    const cogs = centsToMoney(cogsCents);
+    const grossProfit = centsToMoney(revenueCents - cogsCents);
+    const netProfit = centsToMoney(revenueCents - cogsCents - expensesCents);
 
     return { revenue, expenses, cogs, grossProfit, netProfit, salesCount: periodSales.length };
   };
@@ -118,12 +121,12 @@ export default function Buchhaltung() {
     if (!paymentMethods[sale.payment_method]) {
       paymentMethods[sale.payment_method] = 0;
     }
-    paymentMethods[sale.payment_method] += sale.total_amount || 0;
+    paymentMethods[sale.payment_method] += moneyToCents(sale.total_amount);
   });
 
   const paymentData = Object.entries(paymentMethods).map(([method, amount]) => ({
     name: method,
-    value: amount,
+    value: centsToMoney(amount),
     color: method === 'Bargeld' ? '#10b981' : '#8b5cf6'
   }));
 

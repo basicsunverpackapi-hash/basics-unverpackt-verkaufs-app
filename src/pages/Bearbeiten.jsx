@@ -7,11 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, Package, Upload, User, Download, FileUp, Database, Settings as SettingsIcon, Power, PowerOff, ShoppingCart, Wallet, ShoppingBag } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, Upload, User, Download, FileUp, Database, ShoppingCart, Wallet, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
+import { centsToMoney, formatMoney, moneyToCents, parseDecimalInput } from '@/lib/money';
+
+const ADMIN_PIN = '0613';
 
 export default function Bearbeiten() {
   const [currentSeller, setCurrentSeller] = useState(null);
+  const [adminCode, setAdminCode] = useState('');
+  const [adminUnlocked, setAdminUnlocked] = useState(() => (
+    typeof window !== 'undefined' && sessionStorage.getItem('adminUnlocked') === 'true'
+  ));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({
@@ -34,20 +41,16 @@ export default function Bearbeiten() {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
-  // Settings State
-  const [sellerSystemEnabled, setSellerSystemEnabled] = useState(true);
-
   useEffect(() => {
-    const enabled = localStorage.getItem('sellerSystemEnabled');
-    setSellerSystemEnabled(enabled !== 'false');
-    
+    localStorage.removeItem('sellerSystemEnabled');
+
     const seller = localStorage.getItem('currentSeller');
     if (seller) {
       setCurrentSeller(JSON.parse(seller));
     }
   }, []);
 
-  const isAdmin = currentSeller?.is_admin === true;
+  const isAdmin = currentSeller?.is_admin === true && adminUnlocked;
 
   const queryClient = useQueryClient();
 
@@ -150,7 +153,8 @@ export default function Bearbeiten() {
         // Erstelle einen Korrektur-Eintrag in der Kasse (negativer Betrag)
         await offlineClient.entities.CashRegister.create({
           seller_name: sale.seller_name,
-          amount: -sale.total_amount,
+          amount: -centsToMoney(moneyToCents(sale.total_amount)),
+          amount_cents: -moneyToCents(sale.total_amount),
           type: 'correction',
           date: new Date().toISOString(),
           note: `Verkauf storniert: ${new Date(sale.date).toLocaleString('de-DE')}`
@@ -173,9 +177,24 @@ export default function Bearbeiten() {
   });
 
   const deletePurchaseMutation = useMutation({
-    mutationFn: (id) => offlineClient.entities.Purchase.delete(id),
+    mutationFn: async (purchase) => {
+      await offlineClient.entities.Purchase.delete(purchase.id);
+
+      if (purchase.payment_method === 'Bargeld') {
+        const amountCents = moneyToCents(purchase.amount);
+        await offlineClient.entities.CashRegister.create({
+          seller_name: purchase.seller_name,
+          amount: centsToMoney(amountCents),
+          amount_cents: amountCents,
+          type: 'correction',
+          date: new Date().toISOString(),
+          note: `Einkauf geloescht: ${purchase.item_name}`
+        });
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchases'] });
+      queryClient.invalidateQueries({ queryKey: ['cashRegister'] });
       toast.success('Einkauf gelöscht');
     }
   });
@@ -394,49 +413,39 @@ export default function Bearbeiten() {
     }
   };
 
-  const toggleSellerSystem = () => {
-    const newState = !sellerSystemEnabled;
-    
-    if (!newState) {
-      // Deaktivieren
-      if (confirm('Möchten Sie das Verkäufer-System wirklich deaktivieren? Die App wird dann ohne Verkäufer-Auswahl starten.')) {
-        localStorage.setItem('sellerSystemEnabled', 'false');
-        localStorage.setItem('currentSeller', JSON.stringify({ name: 'Standard', id: 'default' }));
-        setSellerSystemEnabled(false);
-        toast.success('Verkäufer-System deaktiviert');
-        setTimeout(() => window.location.reload(), 500);
-      }
-    } else {
-      // Aktivieren
-      if (confirm('Möchten Sie das Verkäufer-System aktivieren? Die App wird beim nächsten Start nach einem Verkäufer fragen.')) {
-        localStorage.setItem('sellerSystemEnabled', 'true');
-        localStorage.removeItem('currentSeller');
-        setSellerSystemEnabled(true);
-        toast.success('Verkäufer-System aktiviert');
-        setTimeout(() => window.location.reload(), 500);
-      }
-    }
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    let pricePerUnit = parseFloat(formData.price_per_unit);
-    let unitGrams = parseFloat(formData.unit_grams);
+    const priceCents = moneyToCents(formData.price_per_unit);
+    let unitGrams = parseDecimalInput(formData.unit_grams);
+
+    if (!formData.name.trim()) {
+      toast.error('Bitte Produktnamen eingeben');
+      return;
+    }
+
+    if (priceCents <= 0 || unitGrams <= 0) {
+      toast.error('Bitte gueltigen Preis und gueltige Einheit eingeben');
+      return;
+    }
     
     // Wenn Preis pro kg eingegeben wurde, in Preis pro unitGrams umrechnen
     if (priceMode === 'kg') {
       // unitGrams ist hier die Anzahl der kg (z.B. 1, 2, etc.)
       const kgAmount = unitGrams; // Speichere die kg-Menge
       unitGrams = kgAmount * 1000; // Umrechnung in Gramm: 1 kg = 1000g, 2 kg = 2000g
-      pricePerUnit = pricePerUnit; // Der Preis bleibt wie eingegeben (Preis für die kg-Menge)
     }
+
+    const purchasePriceCents = formData.purchase_price_per_kg
+      ? moneyToCents(formData.purchase_price_per_kg)
+      : 0;
     
     const data = {
       ...formData,
-      price_per_unit: pricePerUnit,
+      name: formData.name.trim(),
+      price_per_unit: centsToMoney(priceCents),
       unit_grams: unitGrams,
-      purchase_price_per_kg: formData.purchase_price_per_kg ? parseFloat(formData.purchase_price_per_kg) : undefined
+      purchase_price_per_kg: purchasePriceCents > 0 ? centsToMoney(purchasePriceCents) : undefined
     };
 
     if (editingProduct) {
@@ -448,10 +457,67 @@ export default function Bearbeiten() {
 
 
 
+  const handleAdminUnlock = () => {
+    if (adminCode.trim() !== ADMIN_PIN) {
+      toast.error('Falscher Code');
+      setAdminCode('');
+      return;
+    }
+
+    const adminSeller = { name: 'Administrator', id: 'admin', is_admin: true };
+    sessionStorage.setItem('adminUnlocked', 'true');
+    localStorage.setItem('currentSeller', JSON.stringify(adminSeller));
+    setCurrentSeller(adminSeller);
+    setAdminUnlocked(true);
+    setAdminCode('');
+    toast.success('Admin-Zugang gewaehrt');
+  };
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Card className="w-full max-w-md shadow-xl dark:bg-slate-800 dark:border-slate-700">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold dark:text-white">Admin-Code erforderlich</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+              Der Adminbereich kann nur mit dem Code 0613 geoeffnet werden.
+            </p>
+            <Input
+              type="password"
+              value={adminCode}
+              onChange={(e) => setAdminCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAdminUnlock();
+                }
+              }}
+              placeholder="****"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              className="h-12 text-center text-2xl tracking-widest"
+              maxLength={4}
+              autoFocus
+            />
+            <Button
+              onClick={handleAdminUnlock}
+              disabled={adminCode.trim().length !== 4}
+              className="w-full bg-red-600 hover:bg-red-700 text-white"
+            >
+              Adminbereich oeffnen
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <Tabs defaultValue={isAdmin ? "sales" : "products"} className="w-full">
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'} mb-6`}>
+      <Tabs defaultValue="sales" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           {isAdmin && (
             <TabsTrigger value="sales" className="text-base bg-red-50 data-[state=active]:bg-red-100">
               <ShoppingCart className="w-4 h-4 mr-2" />
@@ -470,12 +536,6 @@ export default function Bearbeiten() {
             <Database className="w-4 h-4 mr-2" />
             Backup
           </TabsTrigger>
-          {isAdmin && (
-            <TabsTrigger value="settings" className="text-base">
-              <SettingsIcon className="w-4 h-4 mr-2" />
-              Einstellungen
-            </TabsTrigger>
-          )}
         </TabsList>
 
         {/* Produkte Tab */}
@@ -517,13 +577,13 @@ export default function Bearbeiten() {
                       <h3 className="font-semibold text-lg dark:text-white">{product.name}</h3>
                       {product.purchase_price_per_kg && (
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                          EK: {product.purchase_price_per_kg.toFixed(2)} €/kg
+                          EK: {formatMoney(product.purchase_price_per_kg)} €/kg
                         </p>
                       )}
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                        {product.price_per_unit?.toFixed(2)} € / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
+                        {formatMoney(product.price_per_unit)} € / {product.unit_grams >= 1000 ? `${(product.unit_grams / 1000).toFixed(product.unit_grams % 1000 === 0 ? 0 : 1)} kg` : `${product.unit_grams}g`}
                       </p>
                     </div>
                   </div>
@@ -942,7 +1002,7 @@ export default function Bearbeiten() {
                         size="icon"
                         onClick={() => {
                           if (confirm(`Einkauf wirklich löschen?\n\nArtikel: ${purchase.item_name}\nBetrag: ${purchase.amount?.toFixed(2)} €\nZahlung: ${purchase.payment_method}`)) {
-                            deletePurchaseMutation.mutate(purchase.id);
+                            deletePurchaseMutation.mutate(purchase);
                           }
                         }}
                         className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30"
@@ -957,95 +1017,6 @@ export default function Bearbeiten() {
           </TabsContent>
         )}
 
-        {/* Settings Tab */}
-        <TabsContent value="settings" className="space-y-6">
-          <div className="bg-gradient-to-r from-gray-600 to-slate-600 dark:from-gray-700 dark:to-slate-700 rounded-2xl p-6 shadow-lg text-white">
-            <div>
-              <h2 className="text-3xl font-bold">Einstellungen</h2>
-              <p className="text-gray-100 dark:text-gray-200 mt-2">App-Konfiguration</p>
-            </div>
-          </div>
-
-          <div className="grid gap-6">
-            {/* Verkäufer-System Toggle - nur für Admin */}
-            {isAdmin && (
-              <Card className="dark:bg-slate-800 dark:border-slate-700">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-lg ${sellerSystemEnabled ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700'}`}>
-                      {sellerSystemEnabled ? (
-                        <Power className="w-6 h-6 text-green-600 dark:text-green-400" />
-                      ) : (
-                        <PowerOff className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold dark:text-white mb-2">Verkäufer-System</h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      {sellerSystemEnabled ? (
-                        <>
-                          Das Verkäufer-System ist <strong className="text-green-600 dark:text-green-400">aktiviert</strong>. 
-                          Die App fragt beim Start nach dem Verkäufer und speichert Verkäufe mit Verkäufernamen.
-                        </>
-                      ) : (
-                        <>
-                          Das Verkäufer-System ist <strong className="text-red-600 dark:text-red-400">deaktiviert</strong>. 
-                          Die App startet direkt ohne Verkäufer-Auswahl.
-                        </>
-                      )}
-                    </p>
-                    
-                    {sellerSystemEnabled ? (
-                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-green-800 dark:text-green-300 font-medium mb-2">
-                          ✓ Vorteile des Verkäufer-Systems:
-                        </p>
-                        <ul className="text-sm text-green-700 dark:text-green-400 space-y-1">
-                          <li>• Mehrere Verkäufer können die App nutzen</li>
-                          <li>• Verkäufe werden mit Verkäufername gespeichert</li>
-                          <li>• Kassen-Verwaltung pro Verkäufer</li>
-                          <li>• Auswertungen nach Verkäufer möglich</li>
-                        </ul>
-                      </div>
-                    ) : (
-                      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-blue-800 dark:text-blue-300 font-medium mb-2">
-                          ℹ️ Ohne Verkäufer-System:
-                        </p>
-                        <ul className="text-sm text-blue-700 dark:text-blue-400 space-y-1">
-                          <li>• App startet schneller (kein Login)</li>
-                          <li>• Einfacher für Einzelnutzung</li>
-                          <li>• Alle Verkäufe unter "Standard"</li>
-                        </ul>
-                      </div>
-                    )}
-
-                    <Button
-                      onClick={toggleSellerSystem}
-                      className={sellerSystemEnabled 
-                        ? "bg-red-600 hover:bg-red-700 text-white" 
-                        : "bg-green-600 hover:bg-green-700 text-white"
-                      }
-                    >
-                      {sellerSystemEnabled ? (
-                        <>
-                          <PowerOff className="w-4 h-4 mr-2" />
-                          Verkäufer-System deaktivieren
-                        </>
-                      ) : (
-                        <>
-                          <Power className="w-4 h-4 mr-2" />
-                          Verkäufer-System aktivieren
-                        </>
-                      )}
-                    </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </TabsContent>
       </Tabs>
 
       {/* Seller Dialog */}

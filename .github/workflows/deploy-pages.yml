@@ -27,11 +27,23 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Verify calculations
+        run: npm run test:calc
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Build
-        run: npm run build -- --base=/basics-unverpackt-verkaufs-app/
+        run: npm run build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

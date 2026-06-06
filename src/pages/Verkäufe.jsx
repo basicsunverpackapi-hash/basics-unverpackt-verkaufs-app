@@ -10,6 +10,7 @@ import { de } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import PullToRefresh from '@/components/PullToRefresh';
+import { centsToMoney, formatCents, formatMoney, moneyToCents, parseDecimalInput } from '@/lib/money';
 
 export default function Verkäufe() {
   const queryClient = useQueryClient();
@@ -46,7 +47,8 @@ export default function Verkäufe() {
         // Erstelle einen Korrektur-Eintrag in der Kasse (negativer Betrag)
         await offlineClient.entities.CashRegister.create({
           seller_name: sale.seller_name,
-          amount: -sale.total_amount,
+          amount: -centsToMoney(moneyToCents(sale.total_amount)),
+          amount_cents: -moneyToCents(sale.total_amount),
           type: 'correction',
           date: new Date().toISOString(),
           note: `Verkauf storniert: ${new Date(sale.date).toLocaleString('de-DE')}`
@@ -64,9 +66,33 @@ export default function Verkäufe() {
   });
 
   const handleCancel = (sale) => {
-    if (confirm(`Verkauf wirklich stornieren?\n\nBetrag: ${sale.total_amount?.toFixed(2)} €\nZahlung: ${sale.payment_method}\n${sale.payment_method === 'Bargeld' ? '\n⚠️ Die Kasse wird automatisch korrigiert!' : ''}`)) {
+    const totalText = sale.total_amount_cents != null
+      ? formatCents(sale.total_amount_cents)
+      : formatMoney(sale.total_amount);
+
+    if (confirm(`Verkauf wirklich stornieren?\n\nBetrag: ${totalText} EUR\nZahlung: ${sale.payment_method}${sale.payment_method === 'Bargeld' ? '\nDie Kasse wird automatisch korrigiert!' : ''}`)) {
       deleteSaleMutation.mutate(sale);
     }
+  };
+
+  const formatSaleTotal = (sale) => (
+    sale.total_amount_cents != null
+      ? formatCents(sale.total_amount_cents)
+      : formatMoney(sale.total_amount)
+  );
+
+  const formatItemTotal = (item) => (
+    item.total_price_cents != null
+      ? formatCents(item.total_price_cents)
+      : formatMoney(item.total_price)
+  );
+
+  const formatItemWeight = (item) => {
+    const weightKg = parseDecimalInput(item.weight_kg);
+    if (weightKg > 0) return `${Math.round(weightKg * 1000)} g`;
+
+    const weightGrams = parseDecimalInput(item.weight_grams ?? item.weightGrams);
+    return `${Math.round(weightGrams)} g`;
   };
 
   return (
@@ -162,7 +188,7 @@ export default function Verkäufe() {
                               <div className="flex items-center gap-3">
                                 <div className="text-right">
                                   <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                                    {sale.total_amount?.toFixed(2)} €
+                                    {formatSaleTotal(sale)} EUR
                                   </div>
                                   </div>
                                   {currentSeller?.is_admin && (
@@ -187,12 +213,12 @@ export default function Verkäufe() {
                                     <div>
                                       <span className="font-medium dark:text-white">{item.product_name}</span>
                                       <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">
-                                        {(item.weight_kg * 1000)?.toFixed(0)} g
+                                        {formatItemWeight(item)}
                                       </span>
                                     </div>
                                   </div>
                                   <span className="font-semibold text-green-600 dark:text-green-400">
-                                    {item.total_price?.toFixed(2)} €
+                                    {formatItemTotal(item)} EUR
                                   </span>
                                 </div>
                               ))}
